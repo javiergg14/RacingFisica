@@ -91,6 +91,8 @@ Circle::Circle(PhysBody* i_body, float i_mass)
 }
 
 
+
+
 Circle::~Circle()
 {
 }
@@ -105,6 +107,48 @@ void Circle::Draw()
 	b2Vec2 pos = m_body->body->GetPosition();
 	DrawCircle(METERS_TO_PIXELS(pos.x), METERS_TO_PIXELS(pos.y), (float)METERS_TO_PIXELS(std::log(mass)), Color{ 128, 0, 0, 128 });
 
+}
+
+b2Vec2 TDTire::GetLateralVelocity()
+{
+    b2Vec2 currentRightNormal = m_body->GetWorldVector(b2Vec2(1, 0));
+    return b2Dot(currentRightNormal, m_body->GetLinearVelocity()) * currentRightNormal;
+}
+
+b2Vec2 TDTire::GetForwardVelocity()
+{
+    b2Vec2 currentRightNormal = m_body->GetWorldVector(b2Vec2(0, 1));
+    return b2Dot(currentRightNormal, m_body->GetLinearVelocity()) * currentRightNormal;
+}
+
+void TDTire::Keyboard(unsigned char key) {
+    switch (key) {
+    case 'a': m_controlState |= TDC_LEFT;  break;
+    case 'd': m_controlState |= TDC_RIGHT; break;
+    case 'w': m_controlState |= TDC_UP;    break;
+    case 's': m_controlState |= TDC_DOWN;  break;
+    default: Keyboard(key);
+    }
+}
+void TDTire::KeyboardUp(unsigned char key) {
+    switch (key) {
+    case 'a': m_controlState &= ~TDC_LEFT;  break;
+    case 'd': m_controlState &= ~TDC_RIGHT; break;
+    case 'w': m_controlState &= ~TDC_UP;    break;
+    case 's': m_controlState &= ~TDC_DOWN;  break;
+    default: Keyboard(key);
+    }
+}
+
+void TDTire::UpdateFriction(controlState) 
+{
+    b2Vec2 impulse = m_body->GetMass() * -GetLateralVelocity();
+    m_body->ApplyLinearImpulse(impulse, m_body->GetWorldCenter(), true);
+    m_body->ApplyAngularImpulse(0.1f * m_body->GetInertia() * -m_body->GetAngularVelocity(), true);
+    b2Vec2 currentForwardNormal = GetForwardVelocity();
+    float currentForwardSpeed = currentForwardNormal.Normalize();
+    float dragForceMagnitude = -2 * currentForwardSpeed;
+    m_body->ApplyForce(dragForceMagnitude * currentForwardNormal, m_body->GetWorldCenter());
 }
 
 void Circle::Update(float i_staticFricion, float i_dynamicFriction)

@@ -9,6 +9,18 @@
 
 class PhysBody;
 class PhysicEntity;
+class b2World;
+class b2Body;
+class b2BodyDef;
+class b2PolygonShape;
+class b2Vec2;
+
+enum {
+	TDC_LEFT = 0x1,
+	TDC_RIGHT = 0x2,
+	TDC_UP = 0x4,
+	TDC_DOWN = 0x8
+};
 
 class Circle
 {
@@ -25,6 +37,36 @@ private:
 	Timer m_lifeTime;
 	float mass;
 
+};
+
+class TDTire 
+{
+public:
+	b2Body* m_body;
+
+	TDTire(b2World* world) {
+		b2BodyDef bodyDef;
+		bodyDef.type = b2_dynamicBody;
+		m_body = world->CreateBody(&bodyDef);
+
+		b2PolygonShape polygonShape;
+		polygonShape.SetAsBox(0.5f, 1.25f);
+		m_body->CreateFixture(&polygonShape, 1);//shape, density
+
+		m_body->SetUserData(this);
+	}
+
+	~TDTire() {
+		m_body->GetWorld()->DestroyBody(m_body);
+	}
+private:
+	b2Vec2 GetLateralVelocity();
+	b2Vec2 GetForwardVelocity();
+	void UpdateFriction(int controlState);
+	int m_controlState = 0;
+
+	void Keyboard(unsigned char key);
+	void KeyboardUp(unsigned char key);
 };
 
 
