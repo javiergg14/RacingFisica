@@ -30,7 +30,9 @@ bool ModuleGame::Start()
 	m_creationTimer.Start();
 	int y = 50;
 	PhysBody* circleBody = App->physics->CreateCircle(0, y, 10 * std::log(mass));
+    PhysBody* tdTireBody = App->physics->CreateRectangle(0, y, 10 * std::log(mass), 10 * std::log(mass), b2_dynamicBody, 0);
 	m_circles.emplace_back(std::move(circleBody), mass);
+    m_tdTire.emplace_back(std::move(tdTireBody), mass);
 	return ret;
 }
 
@@ -79,6 +81,16 @@ update_status ModuleGame::Update()
 		c.Draw();
 	}
 
+    for (TDTire& c : m_tdTire)
+    {
+        c.Update(m_staticFrictions[m_currentStaticFriction], m_dynamicFrictions[m_currentDynamicFriction]);
+    }
+
+    for (TDTire& c : m_tdTire)
+    {
+        c.Draw();
+    }
+
 	return UPDATE_CONTINUE;
 }
 
@@ -90,6 +102,13 @@ Circle::Circle(PhysBody* i_body, float i_mass)
 	m_lifeTime.Start();
 }
 
+TDTire::TDTire(PhysBody* i_body, float i_mass)
+    : m_body(i_body)
+    , mass(i_mass)
+{
+    m_lifeTime.Start();
+}
+
 
 
 
@@ -97,9 +116,18 @@ Circle::~Circle()
 {
 }
 
+TDTire::~TDTire()
+{
+}
+
 float Circle::GetLifeTime() const
 {
 	return m_lifeTime.ReadSec();
+}
+
+float TDTire::GetLifeTime() const
+{
+    return m_lifeTime.ReadSec();
 }
 
 void Circle::Draw()
@@ -109,16 +137,11 @@ void Circle::Draw()
 
 }
 
-b2Vec2 TDTire::GetLateralVelocity()
+void TDTire::Draw()
 {
-    b2Vec2 currentRightNormal = m_body->GetWorldVector(b2Vec2(1, 0));
-    return b2Dot(currentRightNormal, m_body->GetLinearVelocity()) * currentRightNormal;
-}
+    b2Vec2 pos = m_body->body->GetPosition();
+    DrawCircle(METERS_TO_PIXELS(pos.x), METERS_TO_PIXELS(pos.y), (float)METERS_TO_PIXELS(std::log(mass)), Color{ 128, 0, 0, 128 });
 
-b2Vec2 TDTire::GetForwardVelocity()
-{
-    b2Vec2 currentRightNormal = m_body->GetWorldVector(b2Vec2(0, 1));
-    return b2Dot(currentRightNormal, m_body->GetLinearVelocity()) * currentRightNormal;
 }
 
 void TDTire::Keyboard(unsigned char key) {
@@ -138,17 +161,6 @@ void TDTire::KeyboardUp(unsigned char key) {
     case 's': m_controlState &= ~TDC_DOWN;  break;
     default: Keyboard(key);
     }
-}
-
-void TDTire::UpdateFriction(controlState) 
-{
-    b2Vec2 impulse = m_body->GetMass() * -GetLateralVelocity();
-    m_body->ApplyLinearImpulse(impulse, m_body->GetWorldCenter(), true);
-    m_body->ApplyAngularImpulse(0.1f * m_body->GetInertia() * -m_body->GetAngularVelocity(), true);
-    b2Vec2 currentForwardNormal = GetForwardVelocity();
-    float currentForwardSpeed = currentForwardNormal.Normalize();
-    float dragForceMagnitude = -2 * currentForwardSpeed;
-    m_body->ApplyForce(dragForceMagnitude * currentForwardNormal, m_body->GetWorldCenter());
 }
 
 void Circle::Update(float i_staticFricion, float i_dynamicFriction)
@@ -233,6 +245,10 @@ void Circle::Update(float i_staticFricion, float i_dynamicFriction)
             m_body->body->ApplyForce(b2Vec2(0.0f, -forceY * 1.3f), b2Vec2_zero, true); // Frenado en el eje Y
         }
     }
+}
+
+void TDTire::Update(float i_staticFricion, float i_dynamicFriction)
+{
 }
 
 

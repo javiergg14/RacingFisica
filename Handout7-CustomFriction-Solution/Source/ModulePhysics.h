@@ -24,6 +24,9 @@ public:
 	float GetRotation() const;
 	bool Contains(int x, int y) const;
 	int RayCast(int x1, int y1, int x2, int y2, float& normal_x, float& normal_y) const;
+	Vector2 GetLateralVelocity();
+	Vector2 GetForwardVelocity();
+	void UpdateFriction();
 
 public:
 	int width, height;
@@ -44,6 +47,7 @@ public:
 	bool CleanUp();
 
 	PhysBody* CreateCircle(int x, int y, int radius);
+	PhysBody* CreateRectangle(int x, int y, int width, int height, b2BodyType Type, float rotation);
 
 	
 	void BeginContact(b2Contact* contact);

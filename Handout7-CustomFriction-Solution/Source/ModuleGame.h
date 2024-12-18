@@ -10,10 +10,6 @@
 class PhysBody;
 class PhysicEntity;
 class b2World;
-class b2Body;
-class b2BodyDef;
-class b2PolygonShape;
-class b2Vec2;
 
 enum {
 	TDC_LEFT = 0x1,
@@ -42,29 +38,20 @@ private:
 class TDTire 
 {
 public:
-	b2Body* m_body;
 
-	TDTire(b2World* world) {
-		b2BodyDef bodyDef;
-		bodyDef.type = b2_dynamicBody;
-		m_body = world->CreateBody(&bodyDef);
+	TDTire(PhysBody* i_body, float i_mass);
+	~TDTire();
 
-		b2PolygonShape polygonShape;
-		polygonShape.SetAsBox(0.5f, 1.25f);
-		m_body->CreateFixture(&polygonShape, 1);//shape, density
+	float GetLifeTime() const;
+	void Draw();
+	void Update(float i_staticFricion, float i_dynamicFriction);
 
-		m_body->SetUserData(this);
-	}
-
-	~TDTire() {
-		m_body->GetWorld()->DestroyBody(m_body);
-	}
 private:
-	b2Vec2 GetLateralVelocity();
-	b2Vec2 GetForwardVelocity();
-	void UpdateFriction(int controlState);
-	int m_controlState = 0;
+	PhysBody* m_body = nullptr;
+	Timer m_lifeTime;
+	float mass;
 
+	int m_controlState = 0;
 	void Keyboard(unsigned char key);
 	void KeyboardUp(unsigned char key);
 };
@@ -87,6 +74,7 @@ public:
 	// TIP: You can check (and maybe reuse) some previous Handout...
 	Timer m_creationTimer;
 	std::vector<Circle> m_circles;
+	std::vector<TDTire> m_tdTire;
 
 	// TODO 5 & 6:
 	std::vector<float> m_staticFrictions = { 0.0f, 0.1f, 0.3f, 0.5f };
