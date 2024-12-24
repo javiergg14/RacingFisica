@@ -51,9 +51,6 @@ private:
 	Timer m_lifeTime;
 	float mass;
 
-	int m_controlState = 0;
-	void Keyboard(unsigned char key);
-	void KeyboardUp(unsigned char key);
 };
 
 

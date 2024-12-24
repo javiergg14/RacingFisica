@@ -205,12 +205,12 @@ PhysBody* ModulePhysics::CreateRectangle(int x, int y, int width, int height, b2
 	return pbody;
 }
 
-//void PhysBody::GetPosition(int& x, int &y) const
-//{
-//	b2Vec2 pos = body->GetPosition();
-//	x = METERS_TO_PIXELS(pos.x) - (width);
-//	y = METERS_TO_PIXELS(pos.y) - (height);
-//}
+void PhysBody::GetPosition(int& x, int &y) const
+{
+	b2Vec2 pos = body->GetPosition();
+	x = METERS_TO_PIXELS(pos.x) - (width);
+	y = METERS_TO_PIXELS(pos.y) - (height);
+}
 
 void PhysBody::GetPhysicPosition(int& x, int& y) const
 {
@@ -291,26 +291,4 @@ void ModulePhysics::BeginContact(b2Contact* contact)
 	{
 		physB->listener->OnCollision(physB, physA);
 	}
-}
-Vector2 PhysBody::GetLateralVelocity()
-{
-	Vector2 currentRightNormal = m_body->GetWorldVector(Vector2(1, 0));
-	return Vector2(currentRightNormal, m_body->GetLinearVelocity()) * currentRightNormal;
-}
-
-Vector2 PhysBody::GetForwardVelocity()
-{
-	Vector2 currentRightNormal = m_body->GetWorldVector(Vector2(0, 1));
-	return Vector2(currentRightNormal, m_body->GetLinearVelocity()) * currentRightNormal;
-}
-
-void PhysBody::UpdateFriction()
-{
-	Vector2 impulse = ModuleGame::->GetMass() * -GetLateralVelocity();
-	m_body->ApplyLinearImpulse(impulse, m_body->GetWorldCenter(), true);
-	m_body->ApplyAngularImpulse(0.1f * m_body->GetInertia() * -m_body->GetAngularVelocity(), true);
-	Vector2 currentForwardNormal = GetForwardVelocity();
-	float currentForwardSpeed = currentForwardNormal.Normalize();
-	float dragForceMagnitude = -2 * currentForwardSpeed;
-	m_body->ApplyForce(dragForceMagnitude * currentForwardNormal, m_body->GetWorldCenter());
 }

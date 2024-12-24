@@ -29,10 +29,10 @@ bool ModuleGame::Start()
 	float mass = 2;
 	m_creationTimer.Start();
 	int y = 50;
-	PhysBody* circleBody = App->physics->CreateCircle(0, y, 10 * std::log(mass));
-    PhysBody* tdTireBody = App->physics->CreateRectangle(0, y, 10 * std::log(mass), 10 * std::log(mass), b2_dynamicBody, 0);
-	m_circles.emplace_back(std::move(circleBody), mass);
-    m_tdTire.emplace_back(std::move(tdTireBody), mass);
+	/*PhysBody* circleBody = App->physics->CreateCircle(0, y, 10 * std::log(mass));*/
+    PhysBody* car = App->physics->CreateRectangle(0, y, 10 * std::log(mass), 10 * std::log(mass), b2_dynamicBody, 0);
+	/*m_circles.emplace_back(std::move(circleBody), mass);*/
+    m_tdTire.emplace_back(std::move(car), mass);
 	return ret;
 }
 
@@ -140,27 +140,8 @@ void Circle::Draw()
 void TDTire::Draw()
 {
     b2Vec2 pos = m_body->body->GetPosition();
-    DrawCircle(METERS_TO_PIXELS(pos.x), METERS_TO_PIXELS(pos.y), (float)METERS_TO_PIXELS(std::log(mass)), Color{ 128, 0, 0, 128 });
+    DrawRectangle(METERS_TO_PIXELS(pos.x), METERS_TO_PIXELS(pos.y), (float)METERS_TO_PIXELS(std::log(mass)), (float)METERS_TO_PIXELS(std::log(mass)), Color{ 128, 0, 0, 128 });
 
-}
-
-void TDTire::Keyboard(unsigned char key) {
-    switch (key) {
-    case 'a': m_controlState |= TDC_LEFT;  break;
-    case 'd': m_controlState |= TDC_RIGHT; break;
-    case 'w': m_controlState |= TDC_UP;    break;
-    case 's': m_controlState |= TDC_DOWN;  break;
-    default: Keyboard(key);
-    }
-}
-void TDTire::KeyboardUp(unsigned char key) {
-    switch (key) {
-    case 'a': m_controlState &= ~TDC_LEFT;  break;
-    case 'd': m_controlState &= ~TDC_RIGHT; break;
-    case 'w': m_controlState &= ~TDC_UP;    break;
-    case 's': m_controlState &= ~TDC_DOWN;  break;
-    default: Keyboard(key);
-    }
 }
 
 void Circle::Update(float i_staticFricion, float i_dynamicFriction)
@@ -249,6 +230,38 @@ void Circle::Update(float i_staticFricion, float i_dynamicFriction)
 
 void TDTire::Update(float i_staticFricion, float i_dynamicFriction)
 {
+    float forceX = 0.3f; // Fuerza para el movimiento en el eje X
+    float forceY = 0.3f; // Fuerza para el movimiento en el eje Y
+    float maxSpeed = 6.0f; // Velocidad máxima permitida
+
+    // Cálculo de fricción estática o dinámica
+    if (m_body->body->GetLinearVelocity().LengthSquared() < 0.001f)
+    {
+        float N = mass * 9.8f;
+        float staticFriction = N * i_staticFricion;
+        forceX = std::max(0.0f, forceX - staticFriction);
+        forceY = std::max(0.0f, forceY - staticFriction);  // Aplicar fricción en el eje Y también
+    }
+    else
+    {
+        float N = mass * 9.8f;
+        float dynamicFriction = N * i_dynamicFriction;
+        forceX = std::max(0.0f, forceX - dynamicFriction);
+        forceY = std::max(0.0f, forceY - dynamicFriction);  // Aplicar fricción en el eje Y también
+    }
+
+    // Aplicar fuerzas para mover el círculo
+    if (IsKeyDown(KEY_D))
+    {
+        m_body->body->ApplyForce(b2Vec2(forceX, 0.0f), b2Vec2_zero, true);
+    }
+    if (IsKeyDown(KEY_A))
+    {
+        m_body->body->ApplyForce(b2Vec2(-forceX, 0.0f), b2Vec2_zero, true);
+    }
+
+    m_body->body->ApplyForce(b2Vec2(0.0f, -forceY), b2Vec2_zero, true); // Movimiento hacia arriba
+
 }
 
 
