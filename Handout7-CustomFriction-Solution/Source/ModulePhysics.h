@@ -51,6 +51,8 @@ public:
 	
 	void BeginContact(b2Contact* contact);
 
+	PhysBody* CreateRectangleSensor(int x, int y, int width, int height);
+
 private:
 
 	bool debug;
