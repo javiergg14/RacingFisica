@@ -26,15 +26,14 @@ bool ModuleGame::Start()
 
     m_creationTimer.Start();
 
-    float mass = 2;
-    m_creationTimer.Start();
-    int y = 50;
-
-    PhysBody* car = App->physics->CreateRectangle(0, y, 10 * std::log(mass), 10 * std::log(mass), b2_dynamicBody, 0);
+	float mass = 50;
+	int y = 50;
+	/*PhysBody* circleBody = App->physics->CreateCircle(0, y, 10 * std::log(mass));*/
+	/*m_circles.emplace_back(std::move(circleBody), mass);*/
     m_tdTire.emplace_back(std::move(car), mass);
 
-    // Actualización de checkpoints
-// Sensores como líneas rectangulares que atraviesan la pista
+    // Actualizaciï¿½n de checkpoints
+// Sensores como lï¿½neas rectangulares que atraviesan la pista
     CreateCheckpoints();
     for (PhysBody* checkpoint : checkpoints)
     {
@@ -175,25 +174,25 @@ void Circle::Update(float i_staticFricion, float i_dynamicFriction)
 {
     float forceX = 0.3f; // Fuerza para el movimiento en el eje X
     float forceY = 0.3f; // Fuerza para el movimiento en el eje Y
-    float maxSpeed = 6.0f; // Velocidad máxima permitida
+    float maxSpeed = 6.0f; // Velocidad mï¿½xima permitida
 
-    // Cálculo de fricción estática o dinámica
+    // Cï¿½lculo de fricciï¿½n estï¿½tica o dinï¿½mica
     if (m_body->body->GetLinearVelocity().LengthSquared() < 0.001f)
     {
         float N = mass * 9.8f;
         float staticFriction = N * i_staticFricion;
         forceX = std::max(0.0f, forceX - staticFriction);
-        forceY = std::max(0.0f, forceY - staticFriction);  // Aplicar fricción en el eje Y también
+        forceY = std::max(0.0f, forceY - staticFriction);  // Aplicar fricciï¿½n en el eje Y tambiï¿½n
     }
     else
     {
         float N = mass * 9.8f;
         float dynamicFriction = N * i_dynamicFriction;
         forceX = std::max(0.0f, forceX - dynamicFriction);
-        forceY = std::max(0.0f, forceY - dynamicFriction);  // Aplicar fricción en el eje Y también
+        forceY = std::max(0.0f, forceY - dynamicFriction);  // Aplicar fricciï¿½n en el eje Y tambiï¿½n
     }
 
-    // Aplicar fuerzas para mover el círculo
+    // Aplicar fuerzas para mover el cï¿½rculo
     if (IsKeyDown(KEY_D))
     {
         m_body->body->ApplyForce(b2Vec2(forceX, 0.0f), b2Vec2_zero, true);
@@ -214,10 +213,10 @@ void Circle::Update(float i_staticFricion, float i_dynamicFriction)
     // Obtener la velocidad actual del cuerpo
     b2Vec2 velocity = m_body->body->GetLinearVelocity();
 
-    // Limitar la velocidad máxima en ambas direcciones (X y Y)
+    // Limitar la velocidad mï¿½xima en ambas direcciones (X y Y)
     if (velocity.Length() > maxSpeed)
     {
-        // Normalizar la velocidad y aplicarle la velocidad máxima
+        // Normalizar la velocidad y aplicarle la velocidad mï¿½xima
         velocity.Normalize();
         velocity *= maxSpeed;
 
@@ -259,25 +258,25 @@ void TDTire::Update(float i_staticFricion, float i_dynamicFriction)
 {
     float forceX = 0.3f; // Fuerza para el movimiento en el eje X
     float forceY = 0.3f; // Fuerza para el movimiento en el eje Y
-    float maxSpeed = 6.0f; // Velocidad máxima permitida
+    float maxSpeed = 6.0f; // Velocidad mï¿½xima permitida
 
-    // Cálculo de fricción estática o dinámica
+    // Cï¿½lculo de fricciï¿½n estï¿½tica o dinï¿½mica
     if (m_body->body->GetLinearVelocity().LengthSquared() < 0.001f)
     {
         float N = mass * 9.8f;
         float staticFriction = N * i_staticFricion;
         forceX = std::max(0.0f, forceX - staticFriction);
-        forceY = std::max(0.0f, forceY - staticFriction);  // Aplicar fricción en el eje Y también
+        forceY = std::max(0.0f, forceY - staticFriction);  // Aplicar fricciï¿½n en el eje Y tambiï¿½n
     }
     else
     {
         float N = mass * 9.8f;
         float dynamicFriction = N * i_dynamicFriction;
         forceX = std::max(0.0f, forceX - dynamicFriction);
-        forceY = std::max(0.0f, forceY - dynamicFriction);  // Aplicar fricción en el eje Y también
+        forceY = std::max(0.0f, forceY - dynamicFriction);  // Aplicar fricciï¿½n en el eje Y tambiï¿½n
     }
 
-    // Aplicar fuerzas para mover el círculo
+    // Aplicar fuerzas para mover el cï¿½rculo
     if (IsKeyDown(KEY_D))
     {
         m_body->body->ApplyForce(b2Vec2(forceX, 0.0f), b2Vec2_zero, true);
