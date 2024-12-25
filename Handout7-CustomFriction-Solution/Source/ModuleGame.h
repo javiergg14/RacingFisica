@@ -10,6 +10,7 @@
 class PhysBody;
 class PhysicEntity;
 class b2World;
+class b2Vec2;
 
 enum {
 	TDC_LEFT = 0x1,
@@ -35,12 +36,12 @@ private:
 
 };
 
-class TDTire 
+class Car
 {
 public:
 
-	TDTire(PhysBody* i_body, float i_mass);
-	~TDTire();
+	Car(PhysBody* i_body, float i_mass);
+	~Car();
 
 	float GetLifeTime() const;
 	void Draw();
@@ -50,6 +51,11 @@ private:
 	PhysBody* m_body = nullptr;
 	Timer m_lifeTime;
 	float mass;
+	float forceX;
+	float forceY;
+	float maxSpeed;
+	float normalForce;
+	float staticFriction;
 
 };
 
@@ -71,7 +77,7 @@ public:
 	// TIP: You can check (and maybe reuse) some previous Handout...
 	Timer m_creationTimer;
 	std::vector<Circle> m_circles;
-	std::vector<TDTire> m_tdTire;
+	std::vector<Car> m_tdTire;
 
 	// TODO 5 & 6:
 	std::vector<float> m_staticFrictions = { 0.0f, 0.1f, 0.3f, 0.5f };
@@ -79,5 +85,6 @@ public:
 	int m_currentStaticFriction = 0;
 	int m_currentDynamicFriction = 0;
 	Texture2D background;
+	float mass;
 };
 

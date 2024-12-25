@@ -177,14 +177,13 @@ PhysBody* ModulePhysics::CreateCircle(int x, int y, int radius)
 	return pbody;
 }
 
-PhysBody* ModulePhysics::CreateRectangle(int x, int y, int width, int height, b2BodyType Type, float rotation)
+PhysBody* ModulePhysics::CreateRectangle(int x, int y, int width, int height, b2BodyType Type)
 {
 	PhysBody* pbody = new PhysBody();
 
 	b2BodyDef body;
 	body.type = Type;
 	body.position.Set(PIXEL_TO_METERS(x), PIXEL_TO_METERS(y));
-	body.angle = rotation;
 	body.userData.pointer = reinterpret_cast<uintptr_t>(pbody);
 
 	b2Body* b = world->CreateBody(&body);
@@ -222,6 +221,11 @@ void PhysBody::GetPhysicPosition(int& x, int& y) const
 float PhysBody::GetRotation() const
 {
 	return body->GetAngle();
+}
+
+float PhysBody::IncreaseRotation() const
+{
+	return body->GetAngle()+1;
 }
 
 bool PhysBody::Contains(int x, int y) const

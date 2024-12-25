@@ -22,6 +22,7 @@ public:
 	//void GetPosition(int& x, int& y) const;
 	void GetPhysicPosition(int& x, int &y) const;
 	float GetRotation() const;
+	float IncreaseRotation() const;
 	bool Contains(int x, int y) const;
 	int RayCast(int x1, int y1, int x2, int y2, float& normal_x, float& normal_y) const;
 	void GetPosition(int& x, int& y) const;
@@ -45,7 +46,7 @@ public:
 	bool CleanUp();
 
 	PhysBody* CreateCircle(int x, int y, int radius);
-	PhysBody* CreateRectangle(int x, int y, int width, int height, b2BodyType Type, float rotation);
+	PhysBody* CreateRectangle(int x, int y, int width, int height, b2BodyType Type);
 
 	
 	void BeginContact(b2Contact* contact);

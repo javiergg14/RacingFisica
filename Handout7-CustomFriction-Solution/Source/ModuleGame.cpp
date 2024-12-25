@@ -26,13 +26,14 @@ bool ModuleGame::Start()
 
 	m_creationTimer.Start();
 
-	float mass = 50;
+	mass = 1.5f;
 	m_creationTimer.Start();
-	int y = 50;
+	//int y = 50; //Radio circulo
 	/*PhysBody* circleBody = App->physics->CreateCircle(0, y, 10 * std::log(mass));*/
-    PhysBody* car = App->physics->CreateRectangle(500, 500, 10 * std::log(mass), 10 * std::log(mass), b2_dynamicBody, 0);
+    PhysBody* car = App->physics->CreateRectangle(500, 500, 10 * std::log(mass), 10 * std::log(mass), b2_dynamicBody);
 	/*m_circles.emplace_back(std::move(circleBody), mass);*/
     m_tdTire.emplace_back(std::move(car), mass);
+
 	return ret;
 }
 
@@ -81,12 +82,12 @@ update_status ModuleGame::Update()
 		c.Draw();
 	}
 
-    for (TDTire& c : m_tdTire)
+    for (Car& c : m_tdTire)
     {
         c.Update(m_staticFrictions[m_currentStaticFriction], m_dynamicFrictions[m_currentDynamicFriction]);
     }
 
-    for (TDTire& c : m_tdTire)
+    for (Car& c : m_tdTire)
     {
         c.Draw();
     }
@@ -102,11 +103,15 @@ Circle::Circle(PhysBody* i_body, float i_mass)
 	m_lifeTime.Start();
 }
 
-TDTire::TDTire(PhysBody* i_body, float i_mass)
+Car::Car(PhysBody* i_body, float i_mass)
     : m_body(i_body)
     , mass(i_mass)
 {
     m_lifeTime.Start();
+    forceX = 0.3f;  // Fuerza para el movimiento en el eje X (control de rotación)
+    forceY = 0.1f;  // Fuerza para el movimiento hacia adelante en el eje Y (automático)
+    maxSpeed = 0.7f; // Velocidad máxima permitida
+    normalForce = mass * 9.8f;
 }
 
 
@@ -116,7 +121,7 @@ Circle::~Circle()
 {
 }
 
-TDTire::~TDTire()
+Car::~Car()
 {
 }
 
@@ -125,7 +130,7 @@ float Circle::GetLifeTime() const
 	return m_lifeTime.ReadSec();
 }
 
-float TDTire::GetLifeTime() const
+float Car::GetLifeTime() const
 {
     return m_lifeTime.ReadSec();
 }
@@ -137,10 +142,10 @@ void Circle::Draw()
 
 }
 
-void TDTire::Draw()
+void Car::Draw()
 {
     b2Vec2 pos = m_body->body->GetPosition();
-    DrawRectangle(METERS_TO_PIXELS(pos.x), METERS_TO_PIXELS(pos.y), (float)METERS_TO_PIXELS(std::log(mass)), (float)METERS_TO_PIXELS(std::log(mass)), Color{ 128, 0, 0, 128 });
+    DrawRectangle(METERS_TO_PIXELS(pos.x), METERS_TO_PIXELS(pos.y), (float)METERS_TO_PIXELS(std::log(mass)), (float)METERS_TO_PIXELS(std::log(mass)), Color{ 0, 0, 0, 128 });
 
 }
 
@@ -228,40 +233,48 @@ void Circle::Update(float i_staticFricion, float i_dynamicFriction)
     }
 }
 
-void TDTire::Update(float i_staticFricion, float i_dynamicFriction)
+void Car::Update(float i_staticFricion, float i_dynamicFriction)
 {
-    float forceX = 0.3f; // Fuerza para el movimiento en el eje X
-    float forceY = 0.3f; // Fuerza para el movimiento en el eje Y
-    float maxSpeed = 6.0f; // Velocidad máxima permitida
-
     // Cálculo de fricción estática o dinámica
     if (m_body->body->GetLinearVelocity().LengthSquared() < 0.001f)
     {
-        float N = mass * 9.8f;
-        float staticFriction = N * i_staticFricion;
+        float staticFriction = normalForce * i_staticFricion;
         forceX = std::max(0.0f, forceX - staticFriction);
-        forceY = std::max(0.0f, forceY - staticFriction);  // Aplicar fricción en el eje Y también
+        forceY = std::max(0.0f, forceY - staticFriction); // Aplicar fricción en el eje Y también
     }
     else
     {
-        float N = mass * 9.8f;
-        float dynamicFriction = N * i_dynamicFriction;
+        float dynamicFriction = normalForce * i_dynamicFriction;
         forceX = std::max(0.0f, forceX - dynamicFriction);
-        forceY = std::max(0.0f, forceY - dynamicFriction);  // Aplicar fricción en el eje Y también
+        forceY = std::max(0.0f, forceY - dynamicFriction); // Aplicar fricción en el eje Y también
     }
 
-    // Aplicar fuerzas para mover el círculo
-    if (IsKeyDown(KEY_D))
+    // Movimiento automático hacia adelante (en el eje Y)
+    m_body->body->ApplyForce(b2Vec2(0.0f, -forceY), b2Vec2_zero, true);
+
+    // Control de rotación
+    if (IsKeyDown(KEY_D)) {
+        // Girar a la derecha
+        m_body->body->SetAngularVelocity(-10.0f);
+        printf("%f\n", m_body->body->GetAngle());
+    }
+    if (IsKeyDown(KEY_A)) {
+        // Girar a la izquierda
+        m_body->body->SetAngularVelocity(10.0f);
+        printf("%f\n", m_body->body->GetAngle());
+    }
+
+    b2Vec2 velocity = m_body->body->GetLinearVelocity();
+
+    // Limitar la velocidad máxima en ambas direcciones (X y Y)
+    if (velocity.Length() > maxSpeed)
     {
-        m_body->body->ApplyForce(b2Vec2(forceX, 0.0f), b2Vec2_zero, true);
-    }
-    if (IsKeyDown(KEY_A))
-    {
-        m_body->body->ApplyForce(b2Vec2(-forceX, 0.0f), b2Vec2_zero, true);
-    }
+        // Normalizar la velocidad y aplicarle la velocidad máxima
+        velocity.Normalize();
+        velocity *= maxSpeed;
 
-    m_body->body->ApplyForce(b2Vec2(0.0f, -forceY), b2Vec2_zero, true); // Movimiento hacia arriba
-
+        m_body->body->SetLinearVelocity(velocity);
+    }
 }
 
 
