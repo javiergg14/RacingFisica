@@ -26,9 +26,9 @@ bool ModuleGame::Start()
 
     m_creationTimer.Start();
 
-	float mass = 50;
+	float mass = 10;
 	int y = 50;
-	/*PhysBody* circleBody = App->physics->CreateCircle(0, y, 10 * std::log(mass));*/
+    PhysBody* car = App->physics->CreateRectangle(500, 500, 10 * std::log(mass), 10 * std::log(mass), b2_dynamicBody, 0);
 	/*m_circles.emplace_back(std::move(circleBody), mass);*/
     m_tdTire.emplace_back(std::move(car), mass);
 
