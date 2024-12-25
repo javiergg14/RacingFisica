@@ -303,7 +303,8 @@ void Car::Update(float i_staticFricion, float i_dynamicFriction)
         m_body->body->SetLinearVelocity(velocity);
     }
 }
-void ModuleGame::CreateCheckpoints() {
+void ModuleGame::CreateCheckpoints() 
+{
     checkpoints.push_back(App->physics->CreateRectangleSensor(928, 652, 75, 10));  // Checkpoint 1: Inicio/Fin Carretera derecha
     checkpoints.push_back(App->physics->CreateRectangleSensor(928, 550, 75, 10));  // Checkpoint 2: Inicio/Fin Carretera derecha
     checkpoints.push_back(App->physics->CreateRectangleSensor(928, 400, 75, 10));  // Checkpoint 3: Inicio/Fin Carretera derecha
@@ -341,7 +342,6 @@ void ModuleGame::CreateCheckpoints() {
     checkpoints.push_back(App->physics->CreateRectangleSensor(685, 508, 75, 10));  // Checkpoint 29: Saltos Carril Derecho
     checkpoints.push_back(App->physics->CreateRectangleSensor(685, 635, 75, 10));  // Checkpoint 30: Saltos Carril Derecho
     checkpoints.push_back(App->physics->CreateRectangleSensor(685, 765, 75, 10));  // Checkpoint 31: Saltos Carril Derecho
-
 }
 
 
