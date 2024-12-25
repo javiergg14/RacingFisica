@@ -62,11 +62,17 @@ public:
 
 	bool Start();
 	update_status Update();
+	void CreateCheckpoints();
 	bool CleanUp();
+	void OnCollision(PhysBody* bodyA, PhysBody* bodyB);
 
 public:
 
-	
+	std::vector<PhysBody*> checkpoints; // Checkpoints en el mapa
+	int currentCheckpointIndex = 0;    // Índice del checkpoint que el coche debe alcanzar
+	int lapCount = 0;                  // Contador de vueltas
+	PhysBody* car = nullptr;           // Referencia al coche
+
 	// TODO 1: Every second, create a circle at the leftmost side of the screen at a random height. These circles should be destroyed after 10 seconds.
 	// TIP: You can check (and maybe reuse) some previous Handout...
 	Timer m_creationTimer;
