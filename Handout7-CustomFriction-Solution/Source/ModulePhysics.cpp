@@ -31,16 +31,26 @@ update_status ModulePhysics::PreUpdate()
 {
 	world->Step(1.0f / 60.0f, 6, 2);
 
-	for(b2Contact* c = world->GetContactList(); c; c = c->GetNext())
+	for (b2Contact* c = world->GetContactList(); c; c = c->GetNext())
 	{
-		if(c->GetFixtureA()->IsSensor() && c->IsTouching())
+		if (c->GetFixtureA()->IsSensor() && c->IsTouching())
 		{
 			b2BodyUserData data1 = c->GetFixtureA()->GetBody()->GetUserData();
-			b2BodyUserData data2 = c->GetFixtureA()->GetBody()->GetUserData();
+			b2BodyUserData data2 = c->GetFixtureB()->GetBody()->GetUserData(); // Cambiado a GetFixtureB()
 
 			PhysBody* pb1 = (PhysBody*)data1.pointer;
 			PhysBody* pb2 = (PhysBody*)data2.pointer;
-			if(pb1 && pb2 && pb1->listener)
+			if (pb1 && pb2 && pb1->listener)
+				pb1->listener->OnCollision(pb1, pb2);
+		}
+		else if (c->GetFixtureB()->IsSensor() && c->IsTouching()) // Agregar verificación para el segundo fixture
+		{
+			b2BodyUserData data1 = c->GetFixtureB()->GetBody()->GetUserData();
+			b2BodyUserData data2 = c->GetFixtureA()->GetBody()->GetUserData(); // Cambiado a GetFixtureA()
+
+			PhysBody* pb1 = (PhysBody*)data1.pointer;
+			PhysBody* pb2 = (PhysBody*)data2.pointer;
+			if (pb1 && pb2 && pb1->listener)
 				pb1->listener->OnCollision(pb1, pb2);
 		}
 	}
@@ -331,20 +341,24 @@ void ModulePhysics::BeginContact(b2Contact* contact)
 	PhysBody* physA = (PhysBody*)dataA.pointer;
 	PhysBody* physB = (PhysBody*)dataB.pointer;
 
+	LOG("Begin contact between bodies");
+
 	if (physA && physA->listener != NULL)
 	{
+		LOG("Contact with body A");
 		physA->listener->OnCollision(physA, physB);
 	}
 
 	if (physB && physB->listener != NULL)
 	{
+		LOG("Contact with body B");
 		physB->listener->OnCollision(physB, physA);
 	}
 }
 PhysBody* ModulePhysics::CreateRectangleSensor(int x, int y, int width, int height)
 {
 	b2BodyDef body;
-	body.type = b2_staticBody;
+	body.type = b2_staticBody; // Los sensores deben ser estáticos
 	body.position.Set(PIXEL_TO_METERS(x), PIXEL_TO_METERS(y));
 
 	b2Body* b = world->CreateBody(&body);
