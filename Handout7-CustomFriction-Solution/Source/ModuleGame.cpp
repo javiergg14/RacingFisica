@@ -24,12 +24,10 @@ bool ModuleGame::Start()
 
     background = LoadTexture("Assets/laceHolderEscenario.png");
 
-    m_creationTimer.Start();
-
 	mass = 1.5f;
 	m_creationTimer.Start();
 	//int y = 50; //Radio circulo
-	/*PhysBody* circleBody = App->physics->CreateCircle(0, y, 10 * std::log(mass));*/
+	//PhysBody* circleBody = App->physics->CreateCircle(0, y, 10 * std::log(mass));
     PhysBody* car = App->physics->CreateRectangle(500, 500, 10 * std::log(mass), 10 * std::log(mass), b2_dynamicBody);
 	/*m_circles.emplace_back(std::move(circleBody), mass);*/
     m_tdTire.emplace_back(std::move(car), mass);
@@ -41,6 +39,13 @@ bool ModuleGame::Start()
     {
         checkpoint->listener = this;
     }
+
+    m_currentStaticFriction = (m_currentStaticFriction + 2);
+
+
+    //// TODO 6: With each right click, increase the DYNAMIC friction coeficient. (At some point, reset it back to zero). Display it at the bottom of the screen.
+    m_currentDynamicFriction = (m_currentDynamicFriction + 2);
+
 
     return ret;
 }
@@ -84,23 +89,13 @@ update_status ModuleGame::Update()
 	//}
 
 	// TODO 5: With each left click, increase the STATIC friction coeficient. (At some point, reset it back to zero). Display it at the bottom of the screen.
-	if (IsMouseButtonPressed(0))
-	{
-		m_currentStaticFriction = (m_currentStaticFriction + 1) % m_staticFrictions.size();
-	}
-
-	//// TODO 6: With each right click, increase the DYNAMIC friction coeficient. (At some point, reset it back to zero). Display it at the bottom of the screen.
-	if (IsMouseButtonPressed(1))
-	{
-		m_currentDynamicFriction = (m_currentDynamicFriction + 1) % m_dynamicFrictions.size();
-	}
-
-
-
-	//DrawText(std::format("Static Friction: {}/ Dynamic Friction: {}", m_staticFrictions[m_currentStaticFriction], m_dynamicFrictions[m_currentDynamicFriction]).c_str(), 10, 600, 30, BLACK);
 
     DrawTexture(background, 0, 0, WHITE);
+
     DrawText(TextFormat("Laps: %d", lapCount), 20, 20, 30, WHITE);
+
+    DrawText(std::format("Static Friction: {}/ Dynamic Friction: {}", m_staticFrictions[m_currentStaticFriction], m_dynamicFrictions[m_currentDynamicFriction]).c_str(), 300, 600, 30, WHITE);
+
     for (Circle& c : m_circles)
 	{
 		c.Update(m_staticFrictions[m_currentStaticFriction], m_dynamicFrictions[m_currentDynamicFriction]);
@@ -137,10 +132,6 @@ Car::Car(PhysBody* i_body, float i_mass)
     , mass(i_mass)
 {
     m_lifeTime.Start();
-    forceX = 0.3f;  // Fuerza para el movimiento en el eje X (control de rotaci�n)
-    forceY = 0.3f;  // Fuerza para el movimiento hacia adelante en el eje Y (autom�tico)
-    maxSpeed = 0.7f; // Velocidad m�xima permitida
-    normalForce = mass * 9.8f;
 }
 
 
@@ -262,51 +253,73 @@ void Circle::Update(float i_staticFricion, float i_dynamicFriction)
 
 void Car::Update(float i_staticFricion, float i_dynamicFriction)
 {
-    // C�lculo de fricci�n est�tica o din�mica
-    if (m_body->body->GetLinearVelocity().LengthSquared() < 0.001f)
-    {
-        float staticFriction = normalForce * i_staticFricion;
-        forceX = std::max(0.0f, forceX - staticFriction);
-        forceY = std::max(0.0f, forceY - staticFriction);  // Aplicar fricci�n en el eje Y tambi�n
-    }
-    else
-    {
-        float dynamicFriction = normalForce * i_dynamicFriction;
-        forceX = std::max(0.0f, forceX - dynamicFriction);
-        forceY = std::max(0.0f, forceY - dynamicFriction);  // Aplicar fricci�n en el eje Y tambi�n
-    }
-
-    // Aplicar fuerzas para mover el c�rculo
-    if (IsKeyDown(KEY_D))
-    {
-        m_body->body->ApplyForce(b2Vec2(forceX, 0.0f), b2Vec2_zero, true);
-    }
-    if (IsKeyDown(KEY_A))
-    {
-        m_body->body->ApplyForce(b2Vec2(-forceX, 0.0f), b2Vec2_zero, true);
-    }
-    if (IsKeyDown(KEY_W))
-    {
-        m_body->body->ApplyForce(b2Vec2(0.0f, -forceY), b2Vec2_zero, true); // Movimiento hacia arriba
-    }
-    if (IsKeyDown(KEY_S))
-    {
-        m_body->body->ApplyForce(b2Vec2(0.0f, forceY), b2Vec2_zero, true); // Movimiento hacia abajo
-    }
+    forceX = 5.0f;  // Fuerza para el movimiento en el eje X (control de rotación)
+    forceY = 5.0f;  // Fuerza para el movimiento hacia adelante en el eje Y (automático)
+    maxSpeed = 0.05f; // Velocidad máxima permitida
+    normalForce = mass * 9.8f;
+    framesWithoutInput = 0;
+    maxFramesWithoutInput = 240;
 
     // Obtener la velocidad actual del cuerpo
     b2Vec2 velocity = m_body->body->GetLinearVelocity();
+    float speed = velocity.Length();
 
-    // Limitar la velocidad m�xima en ambas direcciones (X y Y)
-    if (velocity.Length() > maxSpeed)
+    // Cálculo de fricción estática o dinámica
+    if (speed < 0.001f)
     {
-        // Normalizar la velocidad y aplicarle la velocidad m�xima
+        float staticFriction = normalForce * i_staticFricion;
+        forceX = std::max(0.0f, forceX - staticFriction);
+        forceY = std::max(0.0f, forceY - staticFriction);
+    }
+
+    if (speed > maxSpeed)
+    {
+        // Normalizar la velocidad y aplicarle la velocidad máxima
         velocity.Normalize();
         velocity *= maxSpeed;
-
         m_body->body->SetLinearVelocity(velocity);
     }
+
+    // Aplicar fuerzas para mover el círculo
+    if (IsKeyDown(KEY_D))
+    {
+        float dynamicFriction = normalForce * i_dynamicFriction;
+        m_body->body->ApplyForce(b2Vec2(forceX - dynamicFriction, 0.0f), b2Vec2_zero, true);
+    }
+    if (IsKeyDown(KEY_A))
+    {
+        float dynamicFriction = normalForce * i_dynamicFriction;
+        m_body->body->ApplyForce(b2Vec2(-forceX + dynamicFriction, 0.0f), b2Vec2_zero, true);
+    }
+    if (IsKeyDown(KEY_W))
+    {
+        float dynamicFriction = normalForce * i_dynamicFriction;
+        m_body->body->ApplyForce(b2Vec2(0.0f, -forceY + dynamicFriction), b2Vec2_zero, true); // Movimiento hacia arriba
+    }
+    if (IsKeyDown(KEY_S))
+    {
+        float dynamicFriction = normalForce * i_dynamicFriction;
+        m_body->body->ApplyForce(b2Vec2(0.0f, forceY - dynamicFriction), b2Vec2_zero, true); // Movimiento hacia abajo
+    }
+
+    static int framesWithoutInput = 0;
+    const int maxFramesWithoutInput = 120; // Por ejemplo, espera 30 frames antes de detener
+
+    if (!IsKeyDown(KEY_W) && !IsKeyDown(KEY_S) && !IsKeyDown(KEY_A) && !IsKeyDown(KEY_D))
+    {
+        framesWithoutInput++;
+        if (framesWithoutInput > maxFramesWithoutInput)
+        {
+            m_body->body->SetLinearVelocity(b2Vec2(0, 0));
+        }
+    }
+    else
+    {
+        framesWithoutInput = 0; // Reinicia el contador si hay entrada
+    }
 }
+
+
 void ModuleGame::CreateCheckpoints() 
 {
     checkpoints.push_back(App->physics->CreateRectangleSensor(928, 652, 75, 10));  // Checkpoint 1: Inicio/Fin Carretera derecha

@@ -56,6 +56,8 @@ private:
 	float maxSpeed;
 	float normalForce;
 	float staticFriction;
+	int framesWithoutInput;
+	int maxFramesWithoutInput;
 
 };
 
