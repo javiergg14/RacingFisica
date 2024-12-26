@@ -84,16 +84,16 @@ update_status ModuleGame::Update()
 	//}
 
 	// TODO 5: With each left click, increase the STATIC friction coeficient. (At some point, reset it back to zero). Display it at the bottom of the screen.
-	//if (IsMouseButtonPressed(0))
-	//{
-	//	m_currentStaticFriction = (m_currentStaticFriction + 1) % m_staticFrictions.size();
-	//}
+	if (IsMouseButtonPressed(0))
+	{
+		m_currentStaticFriction = (m_currentStaticFriction + 1) % m_staticFrictions.size();
+	}
 
 	//// TODO 6: With each right click, increase the DYNAMIC friction coeficient. (At some point, reset it back to zero). Display it at the bottom of the screen.
-	//if (IsMouseButtonPressed(1))
-	//{
-	//	m_currentDynamicFriction = (m_currentDynamicFriction + 1) % m_dynamicFrictions.size();
-	//}
+	if (IsMouseButtonPressed(1))
+	{
+		m_currentDynamicFriction = (m_currentDynamicFriction + 1) % m_dynamicFrictions.size();
+	}
 
 
 
@@ -138,7 +138,7 @@ Car::Car(PhysBody* i_body, float i_mass)
 {
     m_lifeTime.Start();
     forceX = 0.3f;  // Fuerza para el movimiento en el eje X (control de rotaci�n)
-    forceY = 0.1f;  // Fuerza para el movimiento hacia adelante en el eje Y (autom�tico)
+    forceY = 0.3f;  // Fuerza para el movimiento hacia adelante en el eje Y (autom�tico)
     maxSpeed = 0.7f; // Velocidad m�xima permitida
     normalForce = mass * 9.8f;
 }
@@ -267,30 +267,34 @@ void Car::Update(float i_staticFricion, float i_dynamicFriction)
     {
         float staticFriction = normalForce * i_staticFricion;
         forceX = std::max(0.0f, forceX - staticFriction);
-        forceY = std::max(0.0f, forceY - staticFriction); // Aplicar fricci�n en el eje Y tambi�n
+        forceY = std::max(0.0f, forceY - staticFriction);  // Aplicar fricci�n en el eje Y tambi�n
     }
     else
     {
         float dynamicFriction = normalForce * i_dynamicFriction;
         forceX = std::max(0.0f, forceX - dynamicFriction);
-        forceY = std::max(0.0f, forceY - dynamicFriction); // Aplicar fricci�n en el eje Y tambi�n
+        forceY = std::max(0.0f, forceY - dynamicFriction);  // Aplicar fricci�n en el eje Y tambi�n
     }
 
-    // Movimiento autom�tico hacia adelante (en el eje Y)
-    m_body->body->ApplyForce(b2Vec2(0.0f, -forceY), b2Vec2_zero, true);
-
-    // Control de rotaci�n
-    if (IsKeyDown(KEY_D)) {
-        // Girar a la derecha
-        m_body->body->SetAngularVelocity(-10.0f);
-        printf("%f\n", m_body->body->GetAngle());
+    // Aplicar fuerzas para mover el c�rculo
+    if (IsKeyDown(KEY_D))
+    {
+        m_body->body->ApplyForce(b2Vec2(forceX, 0.0f), b2Vec2_zero, true);
     }
-    if (IsKeyDown(KEY_A)) {
-        // Girar a la izquierda
-        m_body->body->SetAngularVelocity(10.0f);
-        printf("%f\n", m_body->body->GetAngle());
+    if (IsKeyDown(KEY_A))
+    {
+        m_body->body->ApplyForce(b2Vec2(-forceX, 0.0f), b2Vec2_zero, true);
+    }
+    if (IsKeyDown(KEY_W))
+    {
+        m_body->body->ApplyForce(b2Vec2(0.0f, -forceY), b2Vec2_zero, true); // Movimiento hacia arriba
+    }
+    if (IsKeyDown(KEY_S))
+    {
+        m_body->body->ApplyForce(b2Vec2(0.0f, forceY), b2Vec2_zero, true); // Movimiento hacia abajo
     }
 
+    // Obtener la velocidad actual del cuerpo
     b2Vec2 velocity = m_body->body->GetLinearVelocity();
 
     // Limitar la velocidad m�xima en ambas direcciones (X y Y)
