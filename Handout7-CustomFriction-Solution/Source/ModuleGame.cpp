@@ -55,14 +55,14 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
     // Verifica si el coche toca un checkpoint
     if (bodyA == car || bodyB == car)
     {
-        PhysBody* checkpoint = (bodyA == car) ? bodyB : bodyA;
+        PhysBody* checkpoint = checkpoints[currentCheckpointIndex];
 
         if (checkpoint == nullptr) {
             LOG("Checkpoint is NULL!"); // Verifica si el checkpoint es NULL
             return; // Salir si el checkpoint es NULL
         }
 
-        // Verifica si el checkpoint actual es el correcto
+        // Verifica si se ha alcanzado el checkpoint correcto
         if (checkpoint == checkpoints[currentCheckpointIndex])
         {
             LOG("Checkpoint %d reached!", currentCheckpointIndex + 1);
@@ -71,7 +71,8 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
             // Verifica si se ha pasado el último checkpoint
             if (currentCheckpointIndex >= checkpoints.size())
             {
-                if (checkpoint == checkpoints[0]) // Verifica si es el checkpoint de inicio/fin
+                // Verifica si es el checkpoint de inicio/fin
+                if (checkpoint == checkpoints[0]) // Checkpoint de inicio/fin
                 {
                     lapCount++; // Incrementar vueltas
                     LOG("Lap completed! Total laps: %d", lapCount);
@@ -361,4 +362,6 @@ void ModuleGame::CreateCheckpoints()
     checkpoints.push_back(App->physics->CreateRectangleSensor(880, 945, 10, 95));  // Checkpoint 29: Ultima curva
 
     checkpoints.push_back(App->physics->CreateRectangleSensor(928, 800, 75, 10));  // Checkpoint 30: Inicio/Fin Carretera derecha
+
+    checkpoints.push_back(checkpoints[0]); 
 }
