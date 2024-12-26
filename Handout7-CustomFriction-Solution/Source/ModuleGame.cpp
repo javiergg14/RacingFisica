@@ -22,7 +22,7 @@ bool ModuleGame::Start()
 
     background = LoadTexture("Assets/laceHolderEscenario.png");
 
-	mass = 1.5f;
+	mass = 3.0f;
 	m_creationTimer.Start();
 	//int y = 50; //Radio circulo
 	//PhysBody* circleBody = App->physics->CreateCircle(0, y, 10 * std::log(mass));
@@ -39,11 +39,11 @@ bool ModuleGame::Start()
         checkpoint->listener = this;
     }
 
-    m_currentStaticFriction = (m_currentStaticFriction + 2);
+    m_currentStaticFriction = 2;
 
 
     //// TODO 6: With each right click, increase the DYNAMIC friction coeficient. (At some point, reset it back to zero). Display it at the bottom of the screen.
-    m_currentDynamicFriction = (m_currentDynamicFriction + 2);
+    m_currentDynamicFriction = 2;
 
 
     return ret;
@@ -98,9 +98,6 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 // Update: draw background
 update_status ModuleGame::Update()
 {
-    b2Vec2 carPosition = car->body->GetPosition();
-    LOG("Car Position: (%f, %f)", carPosition.x, carPosition.y);
-
     DrawTexture(background, 0, 0, WHITE);
     DrawText(TextFormat("Laps: %d", lapCount), 20, 20, 30, WHITE);
 	// TODO 1:
@@ -274,70 +271,63 @@ void Circle::Update(float i_staticFricion, float i_dynamicFriction)
 
 void Car::Update(float i_staticFricion, float i_dynamicFriction)
 {
-    forceX = 5.0f;  // Fuerza para el movimiento en el eje X (control de rotación)
-    forceY = 5.0f;  // Fuerza para el movimiento hacia adelante en el eje Y (automático)
-    maxSpeed = 0.05f; // Velocidad máxima permitida
+    forceX = 10.0f;  // Fuerza para el movimiento en el eje X (control de rotación)
+    forceY = 10.0f;  // Fuerza para el movimiento hacia adelante en el eje Y (automático)
+    maxSpeed = 0.001f; // Velocidad máxima permitida
     normalForce = mass * 9.8f;
     framesWithoutInput = 0;
     maxFramesWithoutInput = 240;
 
     // Obtener la velocidad actual del cuerpo
     b2Vec2 velocity = m_body->body->GetLinearVelocity();
-    float speed = velocity.Length();
+
+    b2Vec2 force = b2Vec2(0,0);
 
     // Cálculo de fricción estática o dinámica
-    if (speed < 0.001f)
+    if (velocity.Length() < 0.001f)
     {
         float staticFriction = normalForce * i_staticFricion;
         forceX = std::max(0.0f, forceX - staticFriction);
         forceY = std::max(0.0f, forceY - staticFriction);
     }
 
-    if (speed > maxSpeed)
-    {
-        // Normalizar la velocidad y aplicarle la velocidad máxima
-        velocity.Normalize();
-        velocity *= maxSpeed;
-        m_body->body->SetLinearVelocity(velocity);
-    }
-
     // Aplicar fuerzas para mover el círculo
+    float dynamicFriction = normalForce * i_dynamicFriction;
+    
     if (IsKeyDown(KEY_D))
     {
-        float dynamicFriction = normalForce * i_dynamicFriction;
-        m_body->body->ApplyForce(b2Vec2(forceX - dynamicFriction, 0.0f), b2Vec2_zero, true);
+        force.x = forceX;
     }
     if (IsKeyDown(KEY_A))
     {
-        float dynamicFriction = normalForce * i_dynamicFriction;
-        m_body->body->ApplyForce(b2Vec2(-forceX + dynamicFriction, 0.0f), b2Vec2_zero, true);
+        force.x = -forceX;
     }
     if (IsKeyDown(KEY_W))
     {
-        float dynamicFriction = normalForce * i_dynamicFriction;
-        m_body->body->ApplyForce(b2Vec2(0.0f, -forceY + dynamicFriction), b2Vec2_zero, true); // Movimiento hacia arriba
+        force.y = -forceY;
     }
     if (IsKeyDown(KEY_S))
     {
-        float dynamicFriction = normalForce * i_dynamicFriction;
-        m_body->body->ApplyForce(b2Vec2(0.0f, forceY - dynamicFriction), b2Vec2_zero, true); // Movimiento hacia abajo
+        force.y = forceY;
+    }
+    
+    m_body->body->ApplyForce(force, b2Vec2_zero, true); 
+
+    if (velocity.Length() > 0)
+    {
+        printf("ENTRAA");
+        velocity.x -= std::copysign(dynamicFriction, velocity.x);
+        velocity.y -= std::copysign(dynamicFriction, velocity.y);
     }
 
-    static int framesWithoutInput = 0;
-    const int maxFramesWithoutInput = 120; // Por ejemplo, espera 30 frames antes de detener
+    //if (velocity.Length() > maxSpeed)
+    //{
+    //    float velocityGap = velocity.Length() - maxSpeed;
+    //    velocity.x -= std::copysign(velocityGap / 2, velocity.x);
+    //    velocity.y -= std::copysign(velocityGap / 2, velocity.y);
+    //}
 
-    if (!IsKeyDown(KEY_W) && !IsKeyDown(KEY_S) && !IsKeyDown(KEY_A) && !IsKeyDown(KEY_D))
-    {
-        framesWithoutInput++;
-        if (framesWithoutInput > maxFramesWithoutInput)
-        {
-            m_body->body->SetLinearVelocity(b2Vec2(0, 0));
-        }
-    }
-    else
-    {
-        framesWithoutInput = 0; // Reinicia el contador si hay entrada
-    }
+    m_body->body->SetLinearVelocity(velocity);
 }
 
 

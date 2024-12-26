@@ -10,7 +10,6 @@
 class PhysBody;
 class PhysicEntity;
 class b2World;
-class b2Vec2;
 
 enum {
 	TDC_LEFT = 0x1,
@@ -58,7 +57,6 @@ private:
 	float staticFriction;
 	int framesWithoutInput;
 	int maxFramesWithoutInput;
-
 };
 
 
