@@ -15,8 +15,6 @@ ModuleGame::ModuleGame(Application* app, bool start_enabled) : Module(app, start
 
 ModuleGame::~ModuleGame()
 {}
-
-// Load assets
 bool ModuleGame::Start()
 {
     LOG("Loading Intro assets");
@@ -31,10 +29,11 @@ bool ModuleGame::Start()
     PhysBody* car = App->physics->CreateRectangle(500, 500, 10 * std::log(mass), 10 * std::log(mass), b2_dynamicBody);
 	/*m_circles.emplace_back(std::move(circleBody), mass);*/
     m_tdTire.emplace_back(std::move(car), mass);
+    lapCount = 0;
+    currentCheckpointIndex = 0;
 
-    // Actualizaci�n de checkpoints
-// Sensores como l�neas rectangulares que atraviesan la pista
     CreateCheckpoints();
+    car->listener = this;
     for (PhysBody* checkpoint : checkpoints)
     {
         checkpoint->listener = this;
@@ -60,28 +59,50 @@ bool ModuleGame::CleanUp()
 // OnCollision para manejar colisiones
 void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 {
-    // Verificar si el coche toca un checkpoint
+    LOG("Collision detected");
+
+    // Verifica si el coche toca un checkpoint
     if (bodyA == car || bodyB == car)
     {
-        PhysBody* checkpoint = (bodyA == car) ? bodyB : bodyA;
+        PhysBody* checkpoint = checkpoints[currentCheckpointIndex];
 
+        if (checkpoint == nullptr) {
+            LOG("Checkpoint is NULL!"); // Verifica si el checkpoint es NULL
+            return; // Salir si el checkpoint es NULL
+        }
+
+        // Verifica si se ha alcanzado el checkpoint correcto
         if (checkpoint == checkpoints[currentCheckpointIndex])
         {
+            LOG("Checkpoint %d reached!", currentCheckpointIndex + 1);
             currentCheckpointIndex++;
+
+            // Verifica si se ha pasado el último checkpoint
             if (currentCheckpointIndex >= checkpoints.size())
             {
+                // Verifica si es el checkpoint de inicio/fin
+                if (checkpoint == checkpoints[0]) // Checkpoint de inicio/fin
+                {
+                    lapCount++; // Incrementar vueltas
+                    LOG("Lap completed! Total laps: %d", lapCount);
+                }
                 currentCheckpointIndex = 0; // Reiniciar al primer checkpoint
-                lapCount++;                // Incrementar vueltas
-                LOG("Lap completed! Total laps: %d", lapCount);
             }
+        }
+        else
+        {
+            LOG("Checkpoint reached is not the current checkpoint.");
         }
     }
 }
-
 // Update: draw background
 update_status ModuleGame::Update()
 {
+    b2Vec2 carPosition = car->body->GetPosition();
+    LOG("Car Position: (%f, %f)", carPosition.x, carPosition.y);
 
+    DrawTexture(background, 0, 0, WHITE);
+    DrawText(TextFormat("Laps: %d", lapCount), 20, 20, 30, WHITE);
 	// TODO 1:
 	//if (m_creationTimer.ReadSec() > 1.0f)
 	//{
@@ -322,44 +343,44 @@ void Car::Update(float i_staticFricion, float i_dynamicFriction)
 
 void ModuleGame::CreateCheckpoints() 
 {
-    checkpoints.push_back(App->physics->CreateRectangleSensor(928, 652, 75, 10));  // Checkpoint 1: Inicio/Fin Carretera derecha
-    checkpoints.push_back(App->physics->CreateRectangleSensor(928, 550, 75, 10));  // Checkpoint 2: Inicio/Fin Carretera derecha
-    checkpoints.push_back(App->physics->CreateRectangleSensor(928, 400, 75, 10));  // Checkpoint 3: Inicio/Fin Carretera derecha
-    checkpoints.push_back(App->physics->CreateRectangleSensor(928, 250, 75, 10));  // Checkpoint 4: Inicio/Fin Carretera derecha
-    checkpoints.push_back(App->physics->CreateRectangleSensor(928, 100, 75, 10));  // Checkpoint 5: Inicio/Fin Carretera derecha
-    checkpoints.push_back(App->physics->CreateRectangleSensor(928, 800, 75, 10));  // Checkpoint 7: Inicio/Fin Carretera derecha
+    checkpoints.push_back(App->physics->CreateRectangleSensor(928, 652, 75, 10));  // Checkpoint 1: Inicio/Fin 
+    checkpoints.push_back(App->physics->CreateRectangleSensor(928, 550, 75, 10));  // Checkpoint 2: Carretera derecha
+    checkpoints.push_back(App->physics->CreateRectangleSensor(928, 400, 75, 10));  // Checkpoint 3: Carretera derecha
+    checkpoints.push_back(App->physics->CreateRectangleSensor(928, 250, 75, 10));  // Checkpoint 4: Carretera derecha
+    checkpoints.push_back(App->physics->CreateRectangleSensor(928, 100, 75, 10));  // Checkpoint 5: Carretera derecha
 
-    checkpoints.push_back(App->physics->CreateRectangleSensor(735, 945, 10, 95));  // Checkpoint 8: Ultima Curva
-    checkpoints.push_back(App->physics->CreateRectangleSensor(880, 945, 10, 95));  // Checkpoint 9: Ultima curva
+    checkpoints.push_back(App->physics->CreateRectangleSensor(850, 57, 10, 65));  // Checkpoint 6: Carretera de Arriba
+    checkpoints.push_back(App->physics->CreateRectangleSensor(700, 57, 10, 65));  // Checkpoint 7: Carretera de Arriba
+    checkpoints.push_back(App->physics->CreateRectangleSensor(550, 57, 10, 65));  // Checkpoint 8: Carretera de Arriba
+    checkpoints.push_back(App->physics->CreateRectangleSensor(400, 57, 10, 65));  // Checkpoint 9: Carretera de Arriba
+    checkpoints.push_back(App->physics->CreateRectangleSensor(250, 57, 10, 65));  // Checkpoint 10: Carretera de Arriba
 
-    checkpoints.push_back(App->physics->CreateRectangleSensor(180, 150, 100, 10));  // Checkpoint 10: Carretera izquierda 
-    checkpoints.push_back(App->physics->CreateRectangleSensor(180, 300, 100, 10));  // Checkpoint 11: Carretera izquierda
-    checkpoints.push_back(App->physics->CreateRectangleSensor(180, 400, 100, 10));  // Checkpoint 12: Carretera izquierda
-    checkpoints.push_back(App->physics->CreateRectangleSensor(180, 550, 100, 10));  // Checkpoint 13: Carretera izquierda
-    checkpoints.push_back(App->physics->CreateRectangleSensor(180, 650, 100, 10));  // Checkpoint 14: Carretera izquierda
-    checkpoints.push_back(App->physics->CreateRectangleSensor(180, 800, 175, 10));  // Checkpoint 15: Carretera izquierda
+    checkpoints.push_back(App->physics->CreateRectangleSensor(180, 150, 100, 10));  // Checkpoint 11: Carretera izquierda 
+    checkpoints.push_back(App->physics->CreateRectangleSensor(180, 300, 100, 10));  // Checkpoint 12: Carretera izquierda
+    checkpoints.push_back(App->physics->CreateRectangleSensor(180, 400, 100, 10));  // Checkpoint 13: Carretera izquierda
+    checkpoints.push_back(App->physics->CreateRectangleSensor(180, 550, 100, 10));  // Checkpoint 14: Carretera izquierda
+    checkpoints.push_back(App->physics->CreateRectangleSensor(180, 650, 100, 10));  // Checkpoint 15: Carretera izquierda
+    checkpoints.push_back(App->physics->CreateRectangleSensor(180, 800, 175, 10));  // Checkpoint 16: Carretera izquierda
 
-    checkpoints.push_back(App->physics->CreateRectangleSensor(275, 907, 10, 125));  // Checkpoint 16: Carretera izquierda Curva Abajo
-    checkpoints.push_back(App->physics->CreateRectangleSensor(425, 907, 10, 125));  // Checkpoint 17: Carretera izquierda Curva Abajo
+    checkpoints.push_back(App->physics->CreateRectangleSensor(275, 907, 10, 125));  // Checkpoint 17: Carretera izquierda Curva Abajo
+    checkpoints.push_back(App->physics->CreateRectangleSensor(425, 907, 10, 125));  // Checkpoint 18: Carretera izquierda Curva Abajo
 
-    checkpoints.push_back(App->physics->CreateRectangleSensor(570, 285, 10, 140));  // Checkpoint 18: Curva Mid-Saltos
+    checkpoints.push_back(App->physics->CreateRectangleSensor(465, 755, 75, 10));  // Checkpoint 19: Saltos Carril Izquierdo
+    checkpoints.push_back(App->physics->CreateRectangleSensor(465, 628, 75, 10));  // Checkpoint 20: Saltos Carril Izquierdo
+    checkpoints.push_back(App->physics->CreateRectangleSensor(465, 500, 75, 10));  // Checkpoint 21: Saltos Carril izquierdo
+    checkpoints.push_back(App->physics->CreateRectangleSensor(465, 400, 75, 10));  // Checkpoint 22: Saltos Carril Izquierdo
 
-    checkpoints.push_back(App->physics->CreateRectangleSensor(250, 57, 10, 65));  // Checkpoint 19: Carretera de Arriba
-    checkpoints.push_back(App->physics->CreateRectangleSensor(400, 57, 10, 65));  // Checkpoint 20: Carretera de Arriba
-    checkpoints.push_back(App->physics->CreateRectangleSensor(550, 57, 10, 65));  // Checkpoint 21: Carretera de Arriba
-    checkpoints.push_back(App->physics->CreateRectangleSensor(700, 57, 10, 65));  // Checkpoint 22: Carretera de Arriba
-    checkpoints.push_back(App->physics->CreateRectangleSensor(850, 57, 10, 65));  // Checkpoint 23: Carretera de Arriba
+    checkpoints.push_back(App->physics->CreateRectangleSensor(570, 285, 10, 140));  // Checkpoint 23: Curva Mid-Saltos
 
-    checkpoints.push_back(App->physics->CreateRectangleSensor(465, 500, 75, 10));  // Checkpoint 24: Saltos Carril izquierdo
-    checkpoints.push_back(App->physics->CreateRectangleSensor(465, 400, 75, 10));  // Checkpoint 25: Saltos Carril Izquierdo
-    checkpoints.push_back(App->physics->CreateRectangleSensor(465, 628, 75, 10));  // Checkpoint 26: Saltos Carril Derecho
-    checkpoints.push_back(App->physics->CreateRectangleSensor(465, 755, 75, 10));  // Checkpoint 27: Saltos Carril Derecho
+    checkpoints.push_back(App->physics->CreateRectangleSensor(685, 400, 75, 10));  // Checkpoint 24: Saltos Carril Derecho
+    checkpoints.push_back(App->physics->CreateRectangleSensor(685, 508, 75, 10));  // Checkpoint 25: Saltos Carril Derecho
+    checkpoints.push_back(App->physics->CreateRectangleSensor(685, 635, 75, 10));  // Checkpoint 26: Saltos Carril Derecho
+    checkpoints.push_back(App->physics->CreateRectangleSensor(685, 765, 75, 10));  // Checkpoint 27: Saltos Carril Derecho
 
-    checkpoints.push_back(App->physics->CreateRectangleSensor(685, 400, 75, 10));  // Checkpoint 28: Saltos Carril Derecho
-    checkpoints.push_back(App->physics->CreateRectangleSensor(685, 508, 75, 10));  // Checkpoint 29: Saltos Carril Derecho
-    checkpoints.push_back(App->physics->CreateRectangleSensor(685, 635, 75, 10));  // Checkpoint 30: Saltos Carril Derecho
-    checkpoints.push_back(App->physics->CreateRectangleSensor(685, 765, 75, 10));  // Checkpoint 31: Saltos Carril Derecho
+    checkpoints.push_back(App->physics->CreateRectangleSensor(735, 945, 10, 95));  // Checkpoint 28: Ultima Curva
+    checkpoints.push_back(App->physics->CreateRectangleSensor(880, 945, 10, 95));  // Checkpoint 29: Ultima curva
+
+    checkpoints.push_back(App->physics->CreateRectangleSensor(928, 800, 75, 10));  // Checkpoint 30: Inicio/Fin Carretera derecha
+
+    checkpoints.push_back(checkpoints[0]); 
 }
-
-
-	
