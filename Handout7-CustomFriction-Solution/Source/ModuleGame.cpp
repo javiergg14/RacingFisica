@@ -154,9 +154,11 @@ update_status ModuleGame::Update()
 
     //Indicador
     if (turboActive) {
-        DrawText("Turbo Active!", 300, 50, 20, GREEN);
+        DrawText("Turbo Activo!", 20, 750, 20, GREEN);
     }
-
+    else {
+        DrawText("Recargando Turbo!", 20, 750, 20, RED);
+    }
     return UPDATE_CONTINUE;
 }
 Circle::Circle(PhysBody* i_body, float i_mass)
@@ -173,14 +175,13 @@ Car::Car(PhysBody* i_body, float i_mass)
     m_lifeTime.Start();
 }
 void Car::ApplyTurbo() {
-    float turboForce = 1.0f; // Ajusta la fuerza del turbo según sea necesario
+    float turboForce = 1.5f; //Fuerza del turbo
     b2Vec2 velocity = m_body->body->GetLinearVelocity();
 
-    // Normaliza la dirección de la velocidad
     if (velocity.Length() > 0) {
         velocity.Normalize();
-        // Aplica la fuerza en la dirección de la velocidad
-        b2Vec2 force(velocity.x * turboForce, velocity.y * turboForce); // Crea un nuevo b2Vec2 con la fuerza
+ 
+        b2Vec2 force(velocity.x * turboForce, velocity.y * turboForce); 
         m_body->body->ApplyForce(force, m_body->body->GetWorldCenter(), true);
     }
 }
@@ -302,8 +303,8 @@ void Circle::Update(float i_staticFricion, float i_dynamicFriction)
 
 void Car::Update(float i_staticFricion, float i_dynamicFriction)
 {
-    forceX = 10.0f;  // Fuerza para el movimiento en el eje X (control de rotación)
-    forceY = 10.0f;  // Fuerza para el movimiento hacia adelante en el eje Y (automático)
+    forceX = 5.0f;  // Fuerza para el movimiento en el eje X (control de rotación)
+    forceY = 5.0f;  // Fuerza para el movimiento hacia adelante en el eje Y (automático)
     maxSpeed = 0.001f; // Velocidad máxima permitida
     normalForce = mass * 9.8f;
     framesWithoutInput = 0;
