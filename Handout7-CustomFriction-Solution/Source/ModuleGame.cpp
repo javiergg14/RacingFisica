@@ -8,17 +8,19 @@
 #include <cmath>
 #include <format>
 
-ModuleGame::ModuleGame(Application* app, bool start_enabled) : Module(app, start_enabled)
+ModuleGame::ModuleGame(Application* app, bool start_enabled): Module(app, start_enabled), isMenuActive(true) 
 {
 }
 ModuleGame::~ModuleGame()
 {}
 bool ModuleGame::Start()
 {
+    MenuTexture = LoadTexture("Assets/Menu.png");
+    background = LoadTexture("Assets/laceHolderEscenario.png");
+    creditsTexture = LoadTexture("Assets/Credits.png");
     LOG("Loading Intro assets");
     bool ret = true;
 
-    background = LoadTexture("Assets/laceHolderEscenario.png");
 
 	mass = 1.5f;
 
@@ -47,16 +49,65 @@ bool ModuleGame::Start()
 // Load assets
 bool ModuleGame::CleanUp()
 {
+    UnloadTexture(MenuTexture);
+    UnloadTexture(background);
 	LOG("Unloading Intro scene");
-
 	return true;
+}
+bool ModuleGame::MainMenu()
+{
+    if (isMenuActive)
+    {
+        DrawTexture(MenuTexture, 0, 0, WHITE);
+        const char* menuOptions[] = { "Start", "Credits", "Exit" }; //opciones (maybe agregar elegir mapa?)
+        const int totalOptions = 3; //num de opciones 
+        for (int i = 0; i < totalOptions; ++i)
+        {
+            Color color = (i == selectedMenuOption) ? YELLOW : WHITE;
+            int fontSize = (i == selectedMenuOption) ? 90 : 80;
+            DrawText(menuOptions[i], 50, 700 + i * 100, fontSize, color);
+        }
+        // Manejo de entrada del menú
+        if (IsKeyPressed(KEY_DOWN))
+        {
+            selectedMenuOption = (selectedMenuOption + 1) % totalOptions;
+        }
+        else if (IsKeyPressed(KEY_UP))
+        {
+            selectedMenuOption = (selectedMenuOption - 1 + totalOptions) % totalOptions;
+        }
+        else if (IsKeyPressed(KEY_ENTER)) //con enter se selecciona la opcion 
+        {
+            switch (selectedMenuOption)
+            {
+            case 0: // Start
+                isMenuActive = false;
+                break;
+            case 1: // Credits
+                showCredits = true;
+                isMenuActive = false;
+                break;
+            case 2: // Exit
+                exit(1);
+            }
+        }
+    }
+    if (showCredits)
+    {
+        DrawTexture(creditsTexture, 0, 0, WHITE);
+        DrawText("Press BACKSPACE to return", 280, 950, 30, WHITE);
+        if (IsKeyPressed(KEY_BACKSPACE))
+        {
+            isMenuActive = true;
+            showCredits = false;
+        }
+    }
 }
 // OnCollision para manejar colisiones
 void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 {
     if (bodyA == car || bodyB == car)
     {
-        // Recorremos todos los checkpoints para verificar colisión
         for (size_t i = 0; i < checkpoints.size(); ++i)
         {
             if (bodyA == checkpoints[i] || bodyB == checkpoints[i])
@@ -64,7 +115,7 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
                 // Checkpoint esperado
                 if (i == currentCheckpointIndex)
                 {
-                    LOG("Checkpoint %d reached!", currentCheckpointIndex + 1);
+                    LOG("Checkpoint %d alcanzado!", currentCheckpointIndex + 1);
                     currentCheckpointIndex++;
 
                     // Si alcanzamos el último checkpoint y volvemos al de inicio/fin
@@ -73,33 +124,51 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
                         // Validar si estamos en el checkpoint de inicio/fin
                         if (i == 0)
                         {
-                            lapCount++; // Incrementar vueltas
-                            LOG("Lap completed! Total laps: %d", lapCount);
+                            lapCount++;
+                            LOG("Vuelta Completada! Total de Vueltas: %d", lapCount);
+
+                            if (lapCount == 3)
+                            {
+                                gameFinished = true;
+                                totalTime = m_creationTimer.ReadSec()
+                            }
+
                         }
                         currentCheckpointIndex = 0; // Reiniciar al primer checkpoint
                     }
                 }
                 else
                 {
-                    LOG("Checkpoint %d ignored. Not in sequence.", i + 1);
+                    LOG("Checkpoint %d ignorado.", i + 1);
                 }
 
-                break; // Salimos del bucle tras procesar un checkpoint
+                break;
             }
         }
     }
 }
 
-// Update
 update_status ModuleGame::Update()
 {
+    if (showCredits || isMenuActive)
+    {
+        MainMenu();
+        return UPDATE_CONTINUE;
+    }
+ 
+
     DrawTexture(background, 0, 0, WHITE);
     DrawText(TextFormat("Laps: %d", lapCount), 20, 20, 30, WHITE);
     DrawText(std::format("Static Friction: {}/ Dynamic Friction: {}", m_staticFrictions[m_currentStaticFriction], m_dynamicFrictions[m_currentDynamicFriction]).c_str(), 300, 600, 30, WHITE);
+    //Win Text
+    if (gameFinished) {
+        DrawText("YOU WIN", 400, 300, 50, GREEN);
+        DrawText(TextFormat("Time: %.2f seconds", totalTime), 400, 400, 30, WHITE);
 
+        return UPDATE_CONTINUE;
+    }
     // Manejo del turbo
     if (turboActive) {
-        // Si el turbo está activo, disminuir el tiempo 
         turboUsedTime += GetFrameTime();
         if (turboUsedTime >= turboDuration) {
             turboActive = false; // Desactivar el turbo si se ha gastado todo
@@ -150,8 +219,8 @@ update_status ModuleGame::Update()
         c.Draw();
     }
 
-    float usedPercentage = turboUsedTime / turboDuration; // Porcentaje de uso
-    // Dibuja la barra de uso
+    float usedPercentage = turboUsedTime / turboDuration; // Porcentaje de uso del turbopapy
+    //Barra de uso
     DrawRectangle(50, 800, 20.0f, 150.0f, LIGHTGRAY);
     DrawRectangle(50, 800 + 150.0f * usedPercentage, 20.0f, 150.0f * (1.0f - usedPercentage), BLUE);
 
