@@ -10,9 +10,7 @@
 
 ModuleGame::ModuleGame(Application* app, bool start_enabled) : Module(app, start_enabled)
 {
-
 }
-
 ModuleGame::~ModuleGame()
 {}
 bool ModuleGame::Start()
@@ -21,7 +19,6 @@ bool ModuleGame::Start()
     bool ret = true;
 
     background = LoadTexture("Assets/laceHolderEscenario.png");
-
 	mass = 1.5f;
 	m_creationTimer.Start();
 	//int y = 50; //Radio circulo
@@ -38,14 +35,9 @@ bool ModuleGame::Start()
     {
         checkpoint->listener = this;
     }
-
     m_currentStaticFriction = (m_currentStaticFriction + 2);
-
-
     //// TODO 6: With each right click, increase the DYNAMIC friction coeficient. (At some point, reset it back to zero). Display it at the bottom of the screen.
     m_currentDynamicFriction = (m_currentDynamicFriction + 2);
-
-
     return ret;
 }
 
@@ -96,51 +88,79 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
     }
 }
 // Update: draw background
+// En el método Update
 update_status ModuleGame::Update()
 {
-    b2Vec2 carPosition = car->body->GetPosition();
-    LOG("Car Position: (%f, %f)", carPosition.x, carPosition.y);
-
     DrawTexture(background, 0, 0, WHITE);
     DrawText(TextFormat("Laps: %d", lapCount), 20, 20, 30, WHITE);
-	// TODO 1:
-	//if (m_creationTimer.ReadSec() > 1.0f)
-	//{
-	//	
-	//}
-
-	// TODO 5: With each left click, increase the STATIC friction coeficient. (At some point, reset it back to zero). Display it at the bottom of the screen.
-
-    DrawTexture(background, 0, 0, WHITE);
-
-    DrawText(TextFormat("Laps: %d", lapCount), 20, 20, 30, WHITE);
-
     DrawText(std::format("Static Friction: {}/ Dynamic Friction: {}", m_staticFrictions[m_currentStaticFriction], m_dynamicFrictions[m_currentDynamicFriction]).c_str(), 300, 600, 30, WHITE);
 
-    for (Circle& c : m_circles)
-	{
-		c.Update(m_staticFrictions[m_currentStaticFriction], m_dynamicFrictions[m_currentDynamicFriction]);
-	}
-
-	for (Circle& c : m_circles)
-	{
-		c.Draw();
-	}
-
-    for (Car& c : m_tdTire)
-    {
+    // Manejo del turbo
+    if (turboActive) {
+        // Si el turbo está activo, disminuir el tiempo usado
+        turboUsedTime += GetFrameTime();
+        if (turboUsedTime >= turboDuration) {
+            turboActive = false; // Desactivar el turbo si se ha alcanzado el tiempo máximo
+            turboUsedTime = turboDuration; // Asegurarse de que no exceda la duración
+        }
+    }
+    else {
+        // Recarga del turbo
+        if (turboRechargeTimer < turboRechargeDuration) {
+            turboRechargeTimer += GetFrameTime(); // Recarga el turbo
+            if (turboRechargeTimer > turboRechargeDuration) {
+                turboRechargeTimer = turboRechargeDuration; // Limitar a la duración máxima
+            }
+        }
+        // Retrocede la barra de turbo gastado
+        if (turboUsedTime > 0.0f) {
+            turboUsedTime -= GetFrameTime() * (turboDuration / turboRechargeDuration); // Ajusta la velocidad de recarga
+            if (turboUsedTime < 0.0f) {
+                turboUsedTime = 0.0f; // No permitir que el tiempo usado sea negativo
+            }
+        }
+    }
+    // Activar el turbo si se presiona la tecla y hay tiempo disponible
+    if (IsKeyPressed(KEY_LEFT_SHIFT) && turboRechargeTimer >= 0.0f) {
+        turboActive = true;
+        turboRechargeTimer -= GetFrameTime(); // Disminuir el tiempo de recarga
+        if (turboRechargeTimer < 0.0f) {
+            turboRechargeTimer = 0.0f; // No permitir que el temporizador sea negativo
+        }
+    }
+    // Desactiva el turbo si se suelta la tecla Shift
+    if (IsKeyReleased(KEY_LEFT_SHIFT)) {
+        turboActive = false; // Desactivar el turbo al soltar la tecla
+    }
+    // Aplica el turbo a la velocidad del coche
+    for (Car& c : m_tdTire) {
+        if (turboActive) {
+            c.ApplyTurbo(); // Método que debes implementar en la clase Car
+        }
         c.Update(m_staticFrictions[m_currentStaticFriction], m_dynamicFrictions[m_currentDynamicFriction]);
     }
-
-    for (Car& c : m_tdTire)
-    {
+    // Dibuja el coche y otros elementos
+    for (Circle& c : m_circles) {
+        c.Update(m_staticFrictions[m_currentStaticFriction], m_dynamicFrictions[m_currentDynamicFriction]);
         c.Draw();
     }
+    for (Car& c : m_tdTire) {
+        c.Draw();
+    }
+    // Dibuja la barra de uso
+    float barWidth = 200.0f; // Ancho de la barra
+    float barHeight = 20.0f; // Altura de la barra
+    float usedPercentage = turboUsedTime / turboDuration; // Porcentaje de uso
+    // Dibuja la barra de uso
+    DrawRectangle(300, 100, barWidth, barHeight, BLUE); // Fondo de la barra
+    DrawRectangle(300, 100, barWidth * (1.0f - usedPercentage), barHeight, LIGHTGRAY); // Barra de turbo usada
 
-	return UPDATE_CONTINUE;
+    if (turboActive) {
+        DrawText("Turbo Active!", 300, 50, 20, GREEN);
+    }
+
+    return UPDATE_CONTINUE;
 }
-
-
 Circle::Circle(PhysBody* i_body, float i_mass)
 	: m_body(i_body)
 	, mass(i_mass)
@@ -154,8 +174,18 @@ Car::Car(PhysBody* i_body, float i_mass)
 {
     m_lifeTime.Start();
 }
+void Car::ApplyTurbo() {
+    float turboForce = 1.0f; // Ajusta la fuerza del turbo según sea necesario
+    b2Vec2 velocity = m_body->body->GetLinearVelocity();
 
-
+    // Normaliza la dirección de la velocidad
+    if (velocity.Length() > 0) {
+        velocity.Normalize();
+        // Aplica la fuerza en la dirección de la velocidad
+        b2Vec2 force(velocity.x * turboForce, velocity.y * turboForce); // Crea un nuevo b2Vec2 con la fuerza
+        m_body->body->ApplyForce(force, m_body->body->GetWorldCenter(), true);
+    }
+}
 Circle::~Circle()
 {
 }
@@ -340,10 +370,12 @@ void Car::Update(float i_staticFricion, float i_dynamicFriction)
     }
 }
 
-
-void ModuleGame::CreateCheckpoints() 
+void ModuleGame::CreateCheckpoints()
 {
+    // Checkpoint 1: Inicio/Fin
     checkpoints.push_back(App->physics->CreateRectangleSensor(928, 652, 75, 10));  // Checkpoint 1: Inicio/Fin 
+
+    // Otros checkpoints
     checkpoints.push_back(App->physics->CreateRectangleSensor(928, 550, 75, 10));  // Checkpoint 2: Carretera derecha
     checkpoints.push_back(App->physics->CreateRectangleSensor(928, 400, 75, 10));  // Checkpoint 3: Carretera derecha
     checkpoints.push_back(App->physics->CreateRectangleSensor(928, 250, 75, 10));  // Checkpoint 4: Carretera derecha
@@ -380,7 +412,7 @@ void ModuleGame::CreateCheckpoints()
     checkpoints.push_back(App->physics->CreateRectangleSensor(735, 945, 10, 95));  // Checkpoint 28: Ultima Curva
     checkpoints.push_back(App->physics->CreateRectangleSensor(880, 945, 10, 95));  // Checkpoint 29: Ultima curva
 
-    checkpoints.push_back(App->physics->CreateRectangleSensor(928, 800, 75, 10));  // Checkpoint 30: Inicio/Fin Carretera derecha
+    checkpoints.push_back(App->physics->CreateRectangleSensor(928, 800, 75, 10));  // Checkpoint 30: Carretera derecha
 
-    checkpoints.push_back(checkpoints[0]); 
+    checkpoints.push_back(checkpoints[0]);
 }

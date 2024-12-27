@@ -41,6 +41,7 @@ class Car
 public:
 
 	Car(PhysBody* i_body, float i_mass);
+	void ApplyTurbo();
 	~Car();
 
 	float GetLifeTime() const;
@@ -75,11 +76,18 @@ public:
 	void OnCollision(PhysBody* bodyA, PhysBody* bodyB);
 
 public:
+public:
+	// Variables necesarias
+	float turboRechargeTimer = 0.0f; // Temporizador de recarga
+	float turboRechargeDuration = 5.0f; // Duración de la recarga
+	float turboUsedTime = 0.0f; // Tiempo usado del turbo
+	float turboDuration = 3.0f; // Duración del turbo
+	bool turboActive = false; // Estado del turbo
 
-	std::vector<PhysBody*> checkpoints; // Checkpoints en el mapa
-	int currentCheckpointIndex = 0;    // Índice del checkpoint que el coche debe alcanzar
+	std::vector<PhysBody*> checkpoints;
+	int currentCheckpointIndex = 0;    //checkpoint Index
 	int lapCount = 0;                  // Contador de vueltas
-	PhysBody* car = nullptr;           // Referencia al coche
+	PhysBody* car = nullptr;
 
 	// TODO 1: Every second, create a circle at the leftmost side of the screen at a random height. These circles should be destroyed after 10 seconds.
 	// TIP: You can check (and maybe reuse) some previous Handout...
