@@ -21,26 +21,20 @@ bool ModuleGame::Start()
     LOG("Loading Intro assets");
     bool ret = true;
 
-	mass = 1.5f;
+    // Crear el coche en el centro de la pantalla
+    mass = 100.0f; // Masa del coche
+    car = App->physics->CreateRectangle(500, 500, 50, 100, b2_dynamicBody); // Dimensiones y tipo
+    m_tdTire.emplace_back(std::move(car), mass); // Agregar coche a la lista
 
-	m_creationTimer.Start();
-	//int y = 50; //Radio circulo
-	//PhysBody* circleBody = App->physics->CreateCircle(0, y, 10 * std::log(mass));
-    PhysBody* car = App->physics->CreateRectangle(500, 500, 10 * std::log(mass), 10 * std::log(mass), b2_dynamicBody);
-	/*m_circles.emplace_back(std::move(circleBody), mass);*/
-    m_tdTire.emplace_back(std::move(car), mass);
+    // Configuración de checkpoints
     lapCount = 0;
     currentCheckpointIndex = 0;
-
     CreateCheckpoints();
-    car->listener = this;
+    car->listener = this; // Manejar colisiones
     for (PhysBody* checkpoint : checkpoints)
     {
         checkpoint->listener = this;
     }
-    m_currentStaticFriction = (m_currentStaticFriction + 2);
-    //// TODO 6: With each right click, increase the DYNAMIC friction coeficient. (At some point, reset it back to zero). Display it at the bottom of the screen.
-    m_currentDynamicFriction = (m_currentDynamicFriction + 2);
 
     return ret;
 }
@@ -154,82 +148,76 @@ update_status ModuleGame::Update()
         MainMenu();
         return UPDATE_CONTINUE;
     }
+
+    // Dibujar fondo y texto básico
     DrawTexture(background, 0, 0, WHITE);
     DrawText(TextFormat("Laps: %d", lapCount), 20, 20, 30, WHITE);
-    DrawText(std::format("Static Friction: {}/ Dynamic Friction: {}", m_staticFrictions[m_currentStaticFriction], m_dynamicFrictions[m_currentDynamicFriction]).c_str(), 300, 600, 30, WHITE);
 
-    //Win Text
+    // Win text si el juego ha terminado
     if (gameFinished) {
         DrawText("YOU WIN", 250, 300, 50, GREEN);
         DrawText(TextFormat("Time: %.2f seconds", totalTime), 250, 400, 30, WHITE);
         return UPDATE_CONTINUE;
     }
-    // Manejo del turbo
+
+    // Turbo: actualizar estado y recargar si es necesario
     if (turboActive) {
         turboUsedTime += GetFrameTime();
         if (turboUsedTime >= turboDuration) {
-            turboActive = false; // Desactivar el turbo si se ha gastado todo
+            turboActive = false;
             turboUsedTime = turboDuration;
         }
     }
     else {
-        // Recarga del turbo
-        if (turboRechargeTimer < turboRechargeDuration) {
-            turboRechargeTimer += GetFrameTime();
-            if (turboRechargeTimer > turboRechargeDuration) {
-                turboRechargeTimer = turboRechargeDuration;
-            }
+        // Recargar turbo
+        turboRechargeTimer += GetFrameTime();
+        if (turboRechargeTimer > turboRechargeDuration) {
+            turboRechargeTimer = turboRechargeDuration;
         }
-        // Retrocede la barra de turbo gastado
+        // Reducir tiempo usado si no se está activando
         if (turboUsedTime > 0.0f) {
             turboUsedTime -= GetFrameTime() * (turboDuration / turboRechargeDuration);
             if (turboUsedTime < 0.0f) {
-                turboUsedTime = 0.0f; // No permitir tiempo usado negativo
+                turboUsedTime = 0.0f;
             }
         }
     }
-    // Activar el turbo si se presiona la tecla y hay tiempo disponible
-    if (IsKeyPressed(KEY_LEFT_SHIFT) && turboRechargeTimer >= 0.0f) {
+
+    // Activar turbo si se presiona la tecla y hay energía
+    if (IsKeyPressed(KEY_LEFT_SHIFT) && turboRechargeTimer >= turboDuration) {
         turboActive = true;
-        turboRechargeTimer -= GetFrameTime();
-        if (turboRechargeTimer < 0.0f) {
-            turboRechargeTimer = 0.0f; // No permitir temporizador negativo
-        }
+        turboRechargeTimer = 0.0f;
     }
-    // Desactiva el turbo si se suelta la tecla Shift
-    if (IsKeyReleased(KEY_LEFT_SHIFT)) {
-        turboActive = false; 
-    }
-    // Aplica el turbo a la velocidad del coche
-    for (Car& c : m_tdTire) {
+
+    // Dibujar coches y aplicar turbo
+    for (Car& c : m_tdTire)
+    {
         if (turboActive) {
-            c.ApplyTurbo(); 
+            c.ApplyTurbo();
         }
         c.Update(m_staticFrictions[m_currentStaticFriction], m_dynamicFrictions[m_currentDynamicFriction]);
-    }
-    // Dibuja el coche y otros elementos
-    for (Circle& c : m_circles) {
-        c.Update(m_staticFrictions[m_currentStaticFriction], m_dynamicFrictions[m_currentDynamicFriction]);
-        c.Draw();
-    }
-    for (Car& c : m_tdTire) {
         c.Draw();
     }
 
-    float usedPercentage = turboUsedTime / turboDuration; // Porcentaje de uso del turbopapy
-    //Barra de uso
-    DrawRectangle(50, 800, 20.0f, 150.0f, LIGHTGRAY);
-    DrawRectangle(50, 800 + 150.0f * usedPercentage, 20.0f, 150.0f * (1.0f - usedPercentage), BLUE);
+    // **Indicador del Turbo**
+    float usedPercentage = turboUsedTime / turboDuration;
 
-    //Indicador
+    // Barra de recarga del turbo
+    DrawRectangle(50, 800, 20, 150, LIGHTGRAY); // Fondo de la barra
+    DrawRectangle(50, 800 + 150 * usedPercentage, 20, 150 * (1.0f - usedPercentage), BLUE); // Turbo restante
+
+    // Indicador textual
     if (turboActive) {
         DrawText("Turbo Activo!", 20, 750, 20, GREEN);
     }
     else {
         DrawText("Recargando Turbo!", 20, 750, 20, RED);
     }
+
     return UPDATE_CONTINUE;
 }
+
+
 Circle::Circle(PhysBody* i_body, float i_mass)
 	: m_body(i_body)
 	, mass(i_mass)
@@ -243,15 +231,15 @@ Car::Car(PhysBody* i_body, float i_mass)
 {
     m_lifeTime.Start();
 }
-void Car::ApplyTurbo() {
-    float turboForce = 0.5f; //Fuerza del turbo
+void Car::ApplyTurbo()
+{
+    float turboForce = 500.0f; // Fuerza adicional del turbo
     b2Vec2 velocity = m_body->body->GetLinearVelocity();
 
     if (velocity.Length() > 0) {
         velocity.Normalize();
- 
-        b2Vec2 force(velocity.x * turboForce, velocity.y * turboForce); 
-        m_body->body->ApplyForce(force, m_body->body->GetWorldCenter(), true);
+        b2Vec2 turboImpulse = turboForce * velocity;
+        m_body->body->ApplyLinearImpulse(turboImpulse, m_body->body->GetWorldCenter(), true);
     }
 }
 Circle::~Circle()
@@ -281,10 +269,36 @@ void Circle::Draw()
 
 void Car::Draw()
 {
-    b2Vec2 pos = m_body->body->GetPosition();
-    DrawRectangle(METERS_TO_PIXELS(pos.x), METERS_TO_PIXELS(pos.y), (float)METERS_TO_PIXELS(std::log(mass)), (float)METERS_TO_PIXELS(std::log(mass)), Color{ 0, 0, 0, 128 });
+    // Obtén la posición y el ángulo del cuerpo físico
+    b2Vec2 pos = m_body->body->GetPosition();        // Posición en el mundo físico
+    float angle = m_body->body->GetAngle() * RAD2DEG; // Ángulo en grados
 
+    // Dimensiones del coche (más pequeñas, en metros)
+    float width = 1.0f;  // Ancho del coche en metros
+    float height = 2.0f; // Alto del coche en metros
+
+    // Convierte las dimensiones a píxeles
+    float widthPixels = METERS_TO_PIXELS(width);
+    float heightPixels = METERS_TO_PIXELS(height);
+
+    // Convierte la posición del coche de metros a píxeles
+    float posX = METERS_TO_PIXELS(pos.x);
+    float posY = METERS_TO_PIXELS(pos.y);
+
+    // Centro de rotación
+    Vector2 origin = { widthPixels / 2.0f, heightPixels / 2.0f };
+
+    // Dibuja el coche con rotación y tamaño reducido
+    DrawRectanglePro(
+        { posX, posY, widthPixels, heightPixels }, // Rectángulo con posición en píxeles
+        origin,                                   // Punto de origen para la rotación
+        angle,                                    // Ángulo de rotación
+        RED                                       // Color del coche
+    );
 }
+
+
+
 
 void Circle::Update(float i_staticFricion, float i_dynamicFriction)
 {
@@ -364,60 +378,62 @@ void Circle::Update(float i_staticFricion, float i_dynamicFriction)
         }
     }
 }
-void Car::Update(float i_staticFricion, float i_dynamicFriction)
+
+void Car::Update(float staticFriction, float dynamicFriction)
 {
-    forceX = 5.0f;  // Fuerza para el movimiento en el eje X (control de rotación)
-    forceY = 5.0f;  // Fuerza para el movimiento hacia adelante en el eje Y (automático)
-    maxSpeed = 0.001f; // Velocidad máxima permitida
-    normalForce = mass * 9.8f;
-    framesWithoutInput = 0;
-    maxFramesWithoutInput = 240;
+    // Parámetros ajustados del coche
+    float maxSpeed = 3.0f;         // Velocidad máxima reducida
+    float forwardForce = 50.0f;    // Fuerza aplicada para acelerar (muy reducida)
+    float brakingForce = 80.0f;    // Fuerza aplicada para frenar
+    float angularDamping = 0.02f;  // Amortiguación rotacional
+    dynamicFriction = 1.0f;       // Fricción dinámica alta para detener rápidamente
 
-    // Obtener la velocidad actual del cuerpo
-    b2Vec2 velocity = m_body->body->GetLinearVelocity();
-    b2Vec2 force = b2Vec2(0,0);
-    // Cálculo de fricción estática o dinámica
+    // Obtener la dirección hacia adelante del coche
+    b2Vec2 forwardNormal = m_body->body->GetWorldVector(b2Vec2(0, 1));
 
-    if (velocity.Length() < 0.001f)
-    {
-        float staticFriction = normalForce * i_staticFricion;
-        forceX = std::max(0.0f, forceX - staticFriction);
-        forceY = std::max(0.0f, forceY - staticFriction);
+    // **1. Control del jugador: Acelerar y frenar**
+    b2Vec2 force(0, 0);
+    if (IsKeyDown(KEY_W)) {
+        force -= b2Vec2(forwardNormal.x * forwardForce, forwardNormal.y * forwardForce); // Aplicar fuerza hacia adelante
     }
-    // Aplicar fuerzas para mover el círculo
-    float dynamicFriction = normalForce * i_dynamicFriction;
-    
-    if (IsKeyDown(KEY_D))
-    {
-        force.x = forceX;
+    if (IsKeyDown(KEY_S)) {
+        force += b2Vec2(forwardNormal.x * brakingForce, forwardNormal.y * brakingForce); // Aplicar fuerza hacia atrás (frenado)
     }
-    if (IsKeyDown(KEY_A))
-    {
-        force.x = -forceX;
+
+
+    // **2. Rotación del coche**
+    if (IsKeyDown(KEY_A)) {
+        m_body->body->ApplyTorque(-2.0f, true); // Gira a la izquierda
     }
-    if (IsKeyDown(KEY_W))
-    {
-        force.y = -forceY;
+    if (IsKeyDown(KEY_D)) {
+        m_body->body->ApplyTorque(2.0f, true); // Gira a la derecha
     }
-    if (IsKeyDown(KEY_S))
-    {
-        force.y = forceY;
+
+    // **3. Fricción dinámica (frenado natural)**
+    b2Vec2 velocity = m_body->body->GetLinearVelocity(); // Obtener la velocidad actual
+    b2Vec2 friction = b2Vec2(
+        -std::copysign(std::min(dynamicFriction, std::abs(velocity.x)), velocity.x), // Fricción en X
+        -std::copysign(std::min(dynamicFriction, std::abs(velocity.y)), velocity.y)  // Fricción en Y
+    );
+
+    // Aplicar fuerzas al cuerpo (fuerza del usuario + fricción)
+    m_body->body->ApplyForce(force + friction, m_body->body->GetWorldCenter(), true);
+
+    // **4. Limitar velocidad máxima**
+    if (velocity.Length() > maxSpeed) {
+        velocity.Normalize();
+        velocity *= maxSpeed;
+        m_body->body->SetLinearVelocity(velocity);
     }
-    m_body->body->ApplyForce(force, b2Vec2_zero, true); 
-    if (velocity.Length() > 0)
-    {
-        printf("ENTRAA");
-        velocity.x -= std::copysign(dynamicFriction, velocity.x);
-        velocity.y -= std::copysign(dynamicFriction, velocity.y);
-    }
-    //if (velocity.Length() > maxSpeed)
-    //{
-    //    float velocityGap = velocity.Length() - maxSpeed;
-    //    velocity.x -= std::copysign(velocityGap / 2, velocity.x);
-    //    velocity.y -= std::copysign(velocityGap / 2, velocity.y);
-    //}
-    m_body->body->SetLinearVelocity(velocity);
+
+    // **5. Amortiguación angular**
+    float angularImpulse = angularDamping * m_body->body->GetInertia() * -m_body->body->GetAngularVelocity();
+    m_body->body->ApplyAngularImpulse(angularImpulse, true);
 }
+
+
+
+
 
 void ModuleGame::CreateCheckpoints()
 {
