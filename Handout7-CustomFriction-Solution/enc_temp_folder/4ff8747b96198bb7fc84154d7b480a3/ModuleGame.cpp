@@ -129,7 +129,7 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
                             if (lapCount == 3)
                             {
                                 gameFinished = true;
-                                totalTime = m_creationTimer.ReadSec();
+                                totalTime = m_creationTimer.ReadSec()
                             }
 
                         }

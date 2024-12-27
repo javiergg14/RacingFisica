@@ -77,7 +77,7 @@ public:
     void OnCollision(PhysBody* bodyA, PhysBody* bodyB);
 
 public:
-    // Game state
+    // Estado del juego
     bool isMenuActive = true;
     bool inCredits = false;
     int selectedMenuOption = 0;
@@ -87,33 +87,30 @@ public:
     float turboRechargeTimer = 0.0f;
     float turboRechargeDuration = 5.0f; //Tiempo para recargar Turbo
     float turboUsedTime = 0.0f;
-    float turboDuration = 1.5f; //Tiempo de Turbo
+    float turboDuration = 1.5f;         //Tiempo de Turbo
     bool turboActive = false;
 
-    // Game progress
     bool gameFinished = false;
     float totalTime = 0.0f;
-    int lapCount = 0; // Lap counter
+    int lapCount = 0;
 
-    // Checkpoints and car
+    // Checkpoints y coche
     std::vector<PhysBody*> checkpoints;
     int currentCheckpointIndex = 0;
     PhysBody* car = nullptr;
 
-    // Circle creation
     Timer m_creationTimer;
     std::vector<Circle> m_circles;
 
-    // Tires
     std::vector<Car> m_tdTire;
 
-    // Friction variables
+    //Fricción
     std::vector<float> m_staticFrictions = { 0.0f, 0.1f, 0.3f, 0.5f };
     std::vector<float> m_dynamicFrictions = { 0.0f, 0.1f, 0.3f, 0.5f };
     int m_currentStaticFriction = 0;
     int m_currentDynamicFriction = 0;
 
-    // Textures
+    // Texturas
     Texture2D background;
     Texture2D MenuTexture;
     Texture2D creditsTexture;
