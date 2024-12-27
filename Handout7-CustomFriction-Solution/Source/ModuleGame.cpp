@@ -54,7 +54,6 @@ bool ModuleGame::CleanUp()
 // OnCollision para manejar colisiones
 void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 {
-    // Verifica si el coche toca un checkpoint
     if (bodyA == car || bodyB == car)
     {
         // Recorremos todos los checkpoints para verificar colisión
@@ -62,18 +61,22 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
         {
             if (bodyA == checkpoints[i] || bodyB == checkpoints[i])
             {
-                // Si es el checkpoint esperado
+                // Checkpoint esperado
                 if (i == currentCheckpointIndex)
                 {
                     LOG("Checkpoint %d reached!", currentCheckpointIndex + 1);
                     currentCheckpointIndex++;
 
-                    // Si alcanzamos el último checkpoint, verificamos si es una vuelta completa
+                    // Si alcanzamos el último checkpoint y volvemos al de inicio/fin
                     if (currentCheckpointIndex >= checkpoints.size())
                     {
-                        currentCheckpointIndex = 0; // Reiniciamos al primer checkpoint
-                        lapCount++; // Incrementamos el conteo de vueltas
-                        LOG("Lap completed! Total laps: %d", lapCount);
+                        // Validar si estamos en el checkpoint de inicio/fin
+                        if (i == 0)
+                        {
+                            lapCount++; // Incrementar vueltas
+                            LOG("Lap completed! Total laps: %d", lapCount);
+                        }
+                        currentCheckpointIndex = 0; // Reiniciar al primer checkpoint
                     }
                 }
                 else
@@ -175,7 +178,7 @@ Car::Car(PhysBody* i_body, float i_mass)
     m_lifeTime.Start();
 }
 void Car::ApplyTurbo() {
-    float turboForce = 1.5f; //Fuerza del turbo
+    float turboForce = 0.5f; //Fuerza del turbo
     b2Vec2 velocity = m_body->body->GetLinearVelocity();
 
     if (velocity.Length() > 0) {
@@ -406,5 +409,5 @@ void ModuleGame::CreateCheckpoints()
 
     checkpoints.push_back(App->physics->CreateRectangleSensor(928, 800, 75, 10));  // Checkpoint 30: Carretera derecha
 
-    checkpoints.push_back(checkpoints[0]);
+    checkpoints.push_back(checkpoints[0]); // Checkpoint final es el mismo que el inicio
 }

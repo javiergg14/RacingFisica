@@ -79,7 +79,7 @@ public:
 	float turboRechargeTimer = 0.0f; // Temporizador de recarga
 	float turboRechargeDuration = 5.0f; // Duración de la recarga
 	float turboUsedTime = 0.0f; // Tiempo usado del turbo
-	float turboDuration = 3.0f; // Duración del turbo
+	float turboDuration = 1.5f; // Duración del turbo
 	bool turboActive = false; // Estado del turbo
 
 	std::vector<PhysBody*> checkpoints;
