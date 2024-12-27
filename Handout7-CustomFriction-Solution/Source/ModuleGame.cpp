@@ -21,7 +21,6 @@ bool ModuleGame::Start()
     LOG("Loading Intro assets");
     bool ret = true;
 
-
 	mass = 1.5f;
 
 	m_creationTimer.Start();
@@ -155,16 +154,14 @@ update_status ModuleGame::Update()
         MainMenu();
         return UPDATE_CONTINUE;
     }
- 
-
     DrawTexture(background, 0, 0, WHITE);
     DrawText(TextFormat("Laps: %d", lapCount), 20, 20, 30, WHITE);
     DrawText(std::format("Static Friction: {}/ Dynamic Friction: {}", m_staticFrictions[m_currentStaticFriction], m_dynamicFrictions[m_currentDynamicFriction]).c_str(), 300, 600, 30, WHITE);
+
     //Win Text
     if (gameFinished) {
-        DrawText("YOU WIN", 400, 300, 50, GREEN);
-        DrawText(TextFormat("Time: %.2f seconds", totalTime), 400, 400, 30, WHITE);
-
+        DrawText("YOU WIN", 250, 300, 50, GREEN);
+        DrawText(TextFormat("Time: %.2f seconds", totalTime), 250, 400, 30, WHITE);
         return UPDATE_CONTINUE;
     }
     // Manejo del turbo
@@ -310,7 +307,6 @@ void Circle::Update(float i_staticFricion, float i_dynamicFriction)
         forceX = std::max(0.0f, forceX - dynamicFriction);
         forceY = std::max(0.0f, forceY - dynamicFriction);  // Aplicar fricci�n en el eje Y tambi�n
     }
-
     // Aplicar fuerzas para mover el c�rculo
     if (IsKeyDown(KEY_D))
     {
@@ -328,20 +324,16 @@ void Circle::Update(float i_staticFricion, float i_dynamicFriction)
     {
         m_body->body->ApplyForce(b2Vec2(0.0f, forceY), b2Vec2_zero, true); // Movimiento hacia abajo
     }
-
     // Obtener la velocidad actual del cuerpo
     b2Vec2 velocity = m_body->body->GetLinearVelocity();
-
     // Limitar la velocidad m�xima en ambas direcciones (X y Y)
     if (velocity.Length() > maxSpeed)
     {
         // Normalizar la velocidad y aplicarle la velocidad m�xima
         velocity.Normalize();
         velocity *= maxSpeed;
-
         m_body->body->SetLinearVelocity(velocity);
     }
-
     // Frenar el movimiento cuando se sueltan las teclas
     if (!IsKeyDown(KEY_D))
     {
@@ -372,7 +364,6 @@ void Circle::Update(float i_staticFricion, float i_dynamicFriction)
         }
     }
 }
-
 void Car::Update(float i_staticFricion, float i_dynamicFriction)
 {
     forceX = 5.0f;  // Fuerza para el movimiento en el eje X (control de rotación)
@@ -384,17 +375,15 @@ void Car::Update(float i_staticFricion, float i_dynamicFriction)
 
     // Obtener la velocidad actual del cuerpo
     b2Vec2 velocity = m_body->body->GetLinearVelocity();
-
     b2Vec2 force = b2Vec2(0,0);
-
     // Cálculo de fricción estática o dinámica
+
     if (velocity.Length() < 0.001f)
     {
         float staticFriction = normalForce * i_staticFricion;
         forceX = std::max(0.0f, forceX - staticFriction);
         forceY = std::max(0.0f, forceY - staticFriction);
     }
-
     // Aplicar fuerzas para mover el círculo
     float dynamicFriction = normalForce * i_dynamicFriction;
     
@@ -414,23 +403,19 @@ void Car::Update(float i_staticFricion, float i_dynamicFriction)
     {
         force.y = forceY;
     }
-    
     m_body->body->ApplyForce(force, b2Vec2_zero, true); 
-
     if (velocity.Length() > 0)
     {
         printf("ENTRAA");
         velocity.x -= std::copysign(dynamicFriction, velocity.x);
         velocity.y -= std::copysign(dynamicFriction, velocity.y);
     }
-
     //if (velocity.Length() > maxSpeed)
     //{
     //    float velocityGap = velocity.Length() - maxSpeed;
     //    velocity.x -= std::copysign(velocityGap / 2, velocity.x);
     //    velocity.y -= std::copysign(velocityGap / 2, velocity.y);
     //}
-
     m_body->body->SetLinearVelocity(velocity);
 }
 
