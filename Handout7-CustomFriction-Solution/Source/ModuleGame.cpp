@@ -54,44 +54,40 @@ bool ModuleGame::CleanUp()
 // OnCollision para manejar colisiones
 void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 {
-    LOG("Collision detected");
-
     // Verifica si el coche toca un checkpoint
     if (bodyA == car || bodyB == car)
     {
-        PhysBody* checkpoint = checkpoints[currentCheckpointIndex];
-
-        if (checkpoint == nullptr) {
-            LOG("Checkpoint is NULL!"); // Verifica si el checkpoint es NULL
-            return; // Salir si el checkpoint es NULL
-        }
-
-        // Verifica si se ha alcanzado el checkpoint correcto
-        if (checkpoint == checkpoints[currentCheckpointIndex])
+        // Recorremos todos los checkpoints para verificar colisión
+        for (size_t i = 0; i < checkpoints.size(); ++i)
         {
-            LOG("Checkpoint %d reached!", currentCheckpointIndex + 1);
-            currentCheckpointIndex++;
-
-            // Verifica si se ha pasado el último checkpoint
-            if (currentCheckpointIndex >= checkpoints.size())
+            if (bodyA == checkpoints[i] || bodyB == checkpoints[i])
             {
-                // Verifica si es el checkpoint de inicio/fin
-                if (checkpoint == checkpoints[0]) // Checkpoint de inicio/fin
+                // Si es el checkpoint esperado
+                if (i == currentCheckpointIndex)
                 {
-                    lapCount++; // Incrementar vueltas
-                    LOG("Lap completed! Total laps: %d", lapCount);
+                    LOG("Checkpoint %d reached!", currentCheckpointIndex + 1);
+                    currentCheckpointIndex++;
+
+                    // Si alcanzamos el último checkpoint, verificamos si es una vuelta completa
+                    if (currentCheckpointIndex >= checkpoints.size())
+                    {
+                        currentCheckpointIndex = 0; // Reiniciamos al primer checkpoint
+                        lapCount++; // Incrementamos el conteo de vueltas
+                        LOG("Lap completed! Total laps: %d", lapCount);
+                    }
                 }
-                currentCheckpointIndex = 0; // Reiniciar al primer checkpoint
+                else
+                {
+                    LOG("Checkpoint %d ignored. Not in sequence.", i + 1);
+                }
+
+                break; // Salimos del bucle tras procesar un checkpoint
             }
-        }
-        else
-        {
-            LOG("Checkpoint reached is not the current checkpoint.");
         }
     }
 }
-// Update: draw background
-// En el método Update
+
+// Update
 update_status ModuleGame::Update()
 {
     DrawTexture(background, 0, 0, WHITE);
@@ -100,45 +96,45 @@ update_status ModuleGame::Update()
 
     // Manejo del turbo
     if (turboActive) {
-        // Si el turbo está activo, disminuir el tiempo usado
+        // Si el turbo está activo, disminuir el tiempo 
         turboUsedTime += GetFrameTime();
         if (turboUsedTime >= turboDuration) {
-            turboActive = false; // Desactivar el turbo si se ha alcanzado el tiempo máximo
-            turboUsedTime = turboDuration; // Asegurarse de que no exceda la duración
+            turboActive = false; // Desactivar el turbo si se ha gastado todo
+            turboUsedTime = turboDuration;
         }
     }
     else {
         // Recarga del turbo
         if (turboRechargeTimer < turboRechargeDuration) {
-            turboRechargeTimer += GetFrameTime(); // Recarga el turbo
+            turboRechargeTimer += GetFrameTime();
             if (turboRechargeTimer > turboRechargeDuration) {
-                turboRechargeTimer = turboRechargeDuration; // Limitar a la duración máxima
+                turboRechargeTimer = turboRechargeDuration;
             }
         }
         // Retrocede la barra de turbo gastado
         if (turboUsedTime > 0.0f) {
-            turboUsedTime -= GetFrameTime() * (turboDuration / turboRechargeDuration); // Ajusta la velocidad de recarga
+            turboUsedTime -= GetFrameTime() * (turboDuration / turboRechargeDuration);
             if (turboUsedTime < 0.0f) {
-                turboUsedTime = 0.0f; // No permitir que el tiempo usado sea negativo
+                turboUsedTime = 0.0f; // No permitir tiempo usado negativo
             }
         }
     }
     // Activar el turbo si se presiona la tecla y hay tiempo disponible
     if (IsKeyPressed(KEY_LEFT_SHIFT) && turboRechargeTimer >= 0.0f) {
         turboActive = true;
-        turboRechargeTimer -= GetFrameTime(); // Disminuir el tiempo de recarga
+        turboRechargeTimer -= GetFrameTime();
         if (turboRechargeTimer < 0.0f) {
-            turboRechargeTimer = 0.0f; // No permitir que el temporizador sea negativo
+            turboRechargeTimer = 0.0f; // No permitir temporizador negativo
         }
     }
     // Desactiva el turbo si se suelta la tecla Shift
     if (IsKeyReleased(KEY_LEFT_SHIFT)) {
-        turboActive = false; // Desactivar el turbo al soltar la tecla
+        turboActive = false; 
     }
     // Aplica el turbo a la velocidad del coche
     for (Car& c : m_tdTire) {
         if (turboActive) {
-            c.ApplyTurbo(); // Método que debes implementar en la clase Car
+            c.ApplyTurbo(); 
         }
         c.Update(m_staticFrictions[m_currentStaticFriction], m_dynamicFrictions[m_currentDynamicFriction]);
     }
@@ -150,14 +146,13 @@ update_status ModuleGame::Update()
     for (Car& c : m_tdTire) {
         c.Draw();
     }
-    // Dibuja la barra de uso
-    float barWidth = 200.0f; // Ancho de la barra
-    float barHeight = 20.0f; // Altura de la barra
+
     float usedPercentage = turboUsedTime / turboDuration; // Porcentaje de uso
     // Dibuja la barra de uso
-    DrawRectangle(300, 100, barWidth, barHeight, BLUE); // Fondo de la barra
-    DrawRectangle(300, 100, barWidth * (1.0f - usedPercentage), barHeight, LIGHTGRAY); // Barra de turbo usada
+    DrawRectangle(50, 800, 20.0f, 150.0f, LIGHTGRAY);
+    DrawRectangle(50, 800 + 150.0f * usedPercentage, 20.0f, 150.0f * (1.0f - usedPercentage), BLUE);
 
+    //Indicador
     if (turboActive) {
         DrawText("Turbo Active!", 300, 50, 20, GREEN);
     }
