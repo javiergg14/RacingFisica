@@ -46,6 +46,7 @@ public:
     ~Car();
 
     float GetLifeTime() const;
+    int GetPlayer();
     void Draw(Texture2D texture);
     void Update(float i_staticFriction, float i_dynamicFriction);
 
@@ -94,9 +95,12 @@ public:
 public:
     // Estado del juego
     bool isMenuActive = true;
+    bool isMapSelectorActive = false;
     bool inCredits = false;
     int selectedMenuOption = 0;
+    int selectedMapIndex = 0;
     bool showCredits = false;
+    bool isEnterPressed = false;
 
     //Variables de Turbo
     float turboRechargeTimer = 0.0f;
@@ -128,7 +132,9 @@ public:
     int m_currentDynamicFriction;
 
     // Texturas
-    Texture2D background;
+    Texture2D mapTextures[3];
+    Texture2D mapSelectorBgTexture;
+    Texture2D mapSelectorTextures[3];
     Texture2D MenuTexture;
     Texture2D creditsTexture;
     Texture2D car1Texture;

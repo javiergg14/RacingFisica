@@ -16,10 +16,16 @@ ModuleGame::~ModuleGame()
 bool ModuleGame::Start()
 {
     MenuTexture = LoadTexture("Assets/Menu.png");
-    background = LoadTexture("Assets/background.png");
+    mapTextures[0] = LoadTexture("Assets/map1.png");
+    mapTextures[1] = LoadTexture("Assets/map2.png");
+    mapTextures[2] = LoadTexture("Assets/map3.png");
+    mapSelectorBgTexture = LoadTexture("Assets/map_selector.png");
     creditsTexture = LoadTexture("Assets/Credits.png");
     car1Texture = LoadTexture("Assets/carPlayer1.png");
     car2Texture = LoadTexture("Assets/carPlayer2.png");
+    mapSelectorTextures[0] = LoadTexture("Assets/map1selector.png");
+    mapSelectorTextures[1] = LoadTexture("Assets/map2selector.png");
+    mapSelectorTextures[2] = LoadTexture("Assets/map3selector.png");
 
     LOG("Loading Intro assets");
     bool ret = true;
@@ -51,9 +57,16 @@ bool ModuleGame::Start()
 bool ModuleGame::CleanUp()
 {
     UnloadTexture(MenuTexture);
-    UnloadTexture(background);
+    UnloadTexture(mapTextures[0]);
+    UnloadTexture(mapTextures[1]);
+    UnloadTexture(mapTextures[2]);
     UnloadTexture(car1Texture);
     UnloadTexture(car2Texture);
+    UnloadTexture(mapSelectorBgTexture);
+    UnloadTexture(mapSelectorTextures[0]);
+    UnloadTexture(mapSelectorTextures[1]);
+    UnloadTexture(mapSelectorTextures[2]);
+
 	LOG("Unloading Intro scene");
 	return true;
 }
@@ -62,14 +75,15 @@ bool ModuleGame::MainMenu()
     if (isMenuActive)
     {
         DrawTexture(MenuTexture, 0, 0, WHITE);
-        const char* menuOptions[] = { "Start", "Credits", "Exit" }; //opciones (maybe agregar elegir mapa?)
-        const int totalOptions = 3; //num de opciones 
+        const char* menuOptions[] = { "Start", "Credits", "Exit" };
+        const int totalOptions = 3;
         for (int i = 0; i < totalOptions; ++i)
         {
             Color color = (i == selectedMenuOption) ? YELLOW : WHITE;
             int fontSize = (i == selectedMenuOption) ? 90 : 80;
             DrawText(menuOptions[i], 50, 700 + i * 100, fontSize, color);
         }
+
         // Manejo de entrada del menú
         if (IsKeyPressed(KEY_DOWN))
         {
@@ -79,11 +93,13 @@ bool ModuleGame::MainMenu()
         {
             selectedMenuOption = (selectedMenuOption - 1 + totalOptions) % totalOptions;
         }
-        else if (IsKeyPressed(KEY_ENTER)) //con enter se selecciona la opcion 
+        else if (IsKeyPressed(KEY_ENTER) && !isEnterPressed) // Verificar si ENTER no está bloqueado
         {
+            isEnterPressed = true; // Bloquea la tecla ENTER
             switch (selectedMenuOption)
             {
             case 0: // Start
+                isMapSelectorActive = true;
                 isMenuActive = false;
                 break;
             case 1: // Credits
@@ -105,7 +121,54 @@ bool ModuleGame::MainMenu()
             showCredits = false;
         }
     }
+    if (isMapSelectorActive)
+    {
+        if (IsKeyPressed(KEY_BACKSPACE))
+        {
+            isMenuActive = true;
+            isMapSelectorActive = false;
+        }
+
+        DrawTexture(mapSelectorBgTexture, 0, 0, WHITE);
+
+        Vector2 mapPositions[3] = {
+            {100, 400},
+            {400, 400},
+            {700, 400}
+        };
+
+        for (int i = 0; i < 3; ++i) {
+            float scale = (i == selectedMapIndex) ? 1.5f : 1.0f;
+            Vector2 position = mapPositions[i];
+            Rectangle source = { 0, 0, (float)mapSelectorTextures[i].width, (float)mapSelectorTextures[i].height };
+            Rectangle dest = {
+                position.x,
+                position.y,
+                mapSelectorTextures[i].width * scale,
+                mapSelectorTextures[i].height * scale
+            };
+            Vector2 origin = { mapSelectorTextures[i].width / 2.0f, mapSelectorTextures[i].height / 2.0f };
+            DrawTexturePro(mapSelectorTextures[i], source, dest, origin, 0.0f, WHITE);
+        }
+
+        if (IsKeyPressed(KEY_RIGHT)) {
+            selectedMapIndex = (selectedMapIndex + 1) % 3;
+        }
+        else if (IsKeyPressed(KEY_LEFT)) {
+            selectedMapIndex = (selectedMapIndex - 1 + 3) % 3;
+        }
+        else if (IsKeyPressed(KEY_ENTER) && !isEnterPressed) {
+            isMapSelectorActive = false;
+            // Aquí inicias el juego con el mapa seleccionado
+        }
+    }
+
+    // Liberar el estado de la tecla ENTER cuando sea soltada
+    if (IsKeyReleased(KEY_ENTER)) {
+        isEnterPressed = false;
+    }
 }
+
 // OnCollision para manejar colisiones
 void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 {
@@ -153,14 +216,14 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 
 update_status ModuleGame::Update()
 {
-    if (showCredits || isMenuActive)
+    if (showCredits || isMenuActive || isMapSelectorActive)
     {
         MainMenu();
         return UPDATE_CONTINUE;
     }
 
     // Dibujar fondo y texto básico
-    DrawTexture(background, 0, 0, WHITE);
+    DrawTexture(mapTextures[selectedMapIndex], 0, 0, WHITE);
     DrawText(TextFormat("Laps: %d", lapCount), 20, 20, 30, WHITE);
 
     // Win text si el juego ha terminado
@@ -211,7 +274,14 @@ update_status ModuleGame::Update()
             c.ApplyTurbo();
         }
         c.Update(m_staticFrictions[m_currentStaticFriction], m_dynamicFrictions[m_currentDynamicFriction]);
-        c.Draw(car1Texture);
+
+        if (c.GetPlayer() == 1)
+        {
+            c.Draw(car1Texture);
+        }
+        else if (c.GetPlayer() == 2) {
+            c.Draw(car2Texture);
+        }
     }
 
     // **Indicador del Turbo**
@@ -313,6 +383,11 @@ float Circle::GetLifeTime() const
 float Car::GetLifeTime() const
 {
     return m_lifeTime.ReadSec();
+}
+
+int Car::GetPlayer()
+{
+    return player;
 }
 
 void Circle::Draw()
