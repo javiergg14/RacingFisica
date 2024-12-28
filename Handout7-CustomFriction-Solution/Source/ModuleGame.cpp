@@ -349,20 +349,16 @@ void Circle::Update(float i_staticFricion, float i_dynamicFriction)
         m_body->body->SetLinearVelocity(velocity);
     }
     // Frenar el movimiento cuando se sueltan las teclas
-    if (!IsKeyDown(KEY_D))
-    {
-        if (velocity.x > 0.0f) // Frenar solo si se mueve hacia la derecha
-        {
-            m_body->body->ApplyForce(b2Vec2(-forceX * 1.3f, 0.0f), b2Vec2_zero, true); // Frenado en el eje X
-        }
+    float turningTorque = 0.5f; // Torque reducido para giros más controlados
+
+    if (IsKeyDown(KEY_A)) {
+        m_body->body->ApplyTorque(-turningTorque, true); // Gira a la izquierda
     }
-    if (!IsKeyDown(KEY_A))
-    {
-        if (velocity.x < 0.0f) // Frenar solo si se mueve hacia la izquierda
-        {
-            m_body->body->ApplyForce(b2Vec2(forceX * 1.3f, 0.0f), b2Vec2_zero, true); // Frenado en el eje X
-        }
+
+    if (IsKeyDown(KEY_D)) {
+        m_body->body->ApplyTorque(turningTorque, true); // Gira a la derecha
     }
+
     if (!IsKeyDown(KEY_W))
     {
         if (velocity.y < 0.0f) // Frenar solo si se mueve hacia abajo
@@ -401,12 +397,14 @@ void Car::Update(float staticFriction, float dynamicFriction)
     }
 
 
-    // **2. Rotación del coche**
+    float turningTorque = 1.3f; // Torque reducido para giros más controlados
+
     if (IsKeyDown(KEY_A)) {
-        m_body->body->ApplyTorque(-2.0f, true); // Gira a la izquierda
+        m_body->body->ApplyTorque(-turningTorque, true); // Gira a la izquierda
     }
+
     if (IsKeyDown(KEY_D)) {
-        m_body->body->ApplyTorque(2.0f, true); // Gira a la derecha
+        m_body->body->ApplyTorque(turningTorque, true); // Gira a la derecha
     }
 
     // **3. Fricción dinámica (frenado natural)**
