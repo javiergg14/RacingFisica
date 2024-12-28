@@ -25,7 +25,7 @@ bool ModuleGame::Start()
     mass = 100.0f; // Masa del coche
 
     car1 = new Car(App->physics->CreateRectangle(500, 500, 15, 25, b2_dynamicBody), mass, 1);
-    car2 = new Car(App->physics->CreateRectangle(500, 500, 15, 25, b2_dynamicBody), mass, 1);
+    car2 = new Car(App->physics->CreateRectangle(500, 500, 15, 25, b2_dynamicBody), mass, 2);
 
     m_tdTire.push_back(*car1); // Agregar coche 1
     m_tdTire.push_back(*car2); // Agregar coche 2
