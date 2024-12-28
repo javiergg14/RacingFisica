@@ -41,7 +41,7 @@ private:
 class Car
 {
 public:
-    Car(PhysBody* i_body, float i_mass);
+    Car(PhysBody* i_body, float i_mass, int i_player);
     void ApplyTurbo();
     ~Car();
 
@@ -60,6 +60,7 @@ private:
     float staticFriction;
     int framesWithoutInput;
     int maxFramesWithoutInput;
+    int player;
 };
 
 // Collider class
@@ -76,7 +77,6 @@ private:
 };
 
 
-// ModuleGame class
 class ModuleGame : public Module
 {
 public:
@@ -134,4 +134,7 @@ public:
 
     
     float mass;
+
+    Car* car1;
+    Car* car2;
 };

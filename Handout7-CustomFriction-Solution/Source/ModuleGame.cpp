@@ -23,14 +23,17 @@ bool ModuleGame::Start()
 
     // Crear el coche en el centro de la pantalla
     mass = 100.0f; // Masa del coche
-    car = App->physics->CreateRectangle(500, 500, 15, 25, b2_dynamicBody); // Dimensiones y tipo
-    m_tdTire.emplace_back(std::move(car), mass); // Agregar coche a la lista
+
+    car1 = new Car(App->physics->CreateRectangle(500, 500, 15, 25, b2_dynamicBody), mass, 1);
+    car2 = new Car(App->physics->CreateRectangle(500, 500, 15, 25, b2_dynamicBody), mass, 1);
+
+    m_tdTire.push_back(*car1); // Agregar coche 1
+    m_tdTire.push_back(*car2); // Agregar coche 2
 
     // Configuración de checkpoints
     lapCount = 0;
     currentCheckpointIndex = 0;
     CreateCheckpoints();
-    car->listener = this; // Manejar colisiones
     for (PhysBody* checkpoint : checkpoints)
     {
         checkpoint->listener = this;
@@ -268,9 +271,8 @@ Circle::Circle(PhysBody* i_body, float i_mass)
 	m_lifeTime.Start();
 }
 
-Car::Car(PhysBody* i_body, float i_mass)
-    : m_body(i_body)
-    , mass(i_mass)
+Car::Car(PhysBody* i_body, float i_mass, int i_player)
+    : m_body(i_body), mass(i_mass), player(i_player)
 {
     m_lifeTime.Start();
 }
@@ -426,28 +428,40 @@ void Car::Update(float staticFriction, float dynamicFriction)
     float forwardForce = 1.0f;    // Fuerza aplicada para acelerar (muy reducida)
     float brakingForce = 0.5f;    // Fuerza aplicada para frenar
     float angularDamping = 0.1f;  // Amortiguación rotacional
-    dynamicFriction = 0.4f;       // Fricción dinámica alta para detener rápidamente
+    dynamicFriction = 0.15f;       // Fricción dinámica alta para detener rápidamente
 
     // Obtener la dirección hacia adelante del coche
     b2Vec2 forwardNormal = m_body->body->GetWorldVector(b2Vec2(0, 1));
 
     // **1. Control del jugador: Acelerar y frenar**
     b2Vec2 force(0, 0);
-    if (IsKeyDown(KEY_W)) {
-        force -= b2Vec2(forwardNormal.x * forwardForce, forwardNormal.y * forwardForce); // Aplicar fuerza hacia adelante
+    if (player == 1) { // Controles WASD
+        if (IsKeyDown(KEY_W)) {
+            force -= b2Vec2(forwardNormal.x * forwardForce, forwardNormal.y * forwardForce);
+        }
+        if (IsKeyDown(KEY_S)) {
+            force += b2Vec2(forwardNormal.x * brakingForce, forwardNormal.y * brakingForce);
+        }
+        if (IsKeyDown(KEY_A)) {
+            m_body->body->ApplyTorque(-0.03f, true); // Gira a la izquierda
+        }
+        if (IsKeyDown(KEY_D)) {
+            m_body->body->ApplyTorque(0.03f, true); // Gira a la derecha
+        }
     }
-    if (IsKeyDown(KEY_S)) {
-        force += b2Vec2(forwardNormal.x * brakingForce, forwardNormal.y * brakingForce); // Aplicar fuerza hacia atrás (frenado)
-    }
-
-    float turningTorque = 0.05f; // Torque reducido para giros más controlados
-
-    if (IsKeyDown(KEY_A)) {
-        m_body->body->ApplyTorque(-turningTorque, true); // Gira a la izquierda
-    }
-
-    if (IsKeyDown(KEY_D)) {
-        m_body->body->ApplyTorque(turningTorque, true); // Gira a la derecha
+    else if (player == 2) { // Controles de flechas
+        if (IsKeyDown(KEY_UP)) {
+            force -= b2Vec2(forwardNormal.x * forwardForce, forwardNormal.y * forwardForce);
+        }
+        if (IsKeyDown(KEY_DOWN)) {
+            force += b2Vec2(forwardNormal.x * brakingForce, forwardNormal.y * brakingForce);
+        }
+        if (IsKeyDown(KEY_LEFT)) {
+            m_body->body->ApplyTorque(-0.03f, true); // Gira a la izquierda
+        }
+        if (IsKeyDown(KEY_RIGHT)) {
+            m_body->body->ApplyTorque(0.03f, true); // Gira a la derecha
+        }
     }
 
     // **2. Fricción estática**
