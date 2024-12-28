@@ -16,8 +16,11 @@ ModuleGame::~ModuleGame()
 bool ModuleGame::Start()
 {
     MenuTexture = LoadTexture("Assets/Menu.png");
-    background = LoadTexture("Assets/laceHolderEscenario.png");
+    background = LoadTexture("Assets/background.png");
     creditsTexture = LoadTexture("Assets/Credits.png");
+    car1Texture = LoadTexture("Assets/carPlayer1.png");
+    car2Texture = LoadTexture("Assets/carPlayer2.png");
+
     LOG("Loading Intro assets");
     bool ret = true;
 
@@ -49,6 +52,8 @@ bool ModuleGame::CleanUp()
 {
     UnloadTexture(MenuTexture);
     UnloadTexture(background);
+    UnloadTexture(car1Texture);
+    UnloadTexture(car2Texture);
 	LOG("Unloading Intro scene");
 	return true;
 }
@@ -206,7 +211,7 @@ update_status ModuleGame::Update()
             c.ApplyTurbo();
         }
         c.Update(m_staticFrictions[m_currentStaticFriction], m_dynamicFrictions[m_currentDynamicFriction]);
-        c.Draw();
+        c.Draw(car1Texture);
     }
 
     // **Indicador del Turbo**
@@ -317,7 +322,7 @@ void Circle::Draw()
 
 }
 
-void Car::Draw()
+void Car::Draw(Texture2D texture)
 {
     // Obtén la posición y el ángulo del cuerpo físico
     b2Vec2 pos = m_body->body->GetPosition();        // Posición en el mundo físico
@@ -334,13 +339,9 @@ void Car::Draw()
     // Centro de rotación
     Vector2 origin = { width / 2.0f, height / 2.0f };
 
-    // Dibuja el coche con rotación y tamaño reducido
-    DrawRectanglePro(
-        { posX, posY, width, height }, // Rectángulo con posición en píxeles
-        origin,                                   // Punto de origen para la rotación
-        angle,                                    // Ángulo de rotación
-        RED                                       // Color del coche
-    );
+    DrawTexturePro(texture, Rectangle{ 0, 0, (float)texture.width, (float)texture.height },
+        Rectangle{ (float)posX, (float)posY, (float)texture.width, (float)texture.height },
+        origin, angle, WHITE);
 }
 
 

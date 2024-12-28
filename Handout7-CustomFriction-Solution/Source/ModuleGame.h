@@ -46,7 +46,7 @@ public:
     ~Car();
 
     float GetLifeTime() const;
-    void Draw();
+    void Draw(Texture2D texture);
     void Update(float i_staticFriction, float i_dynamicFriction);
 
 private:
@@ -131,6 +131,8 @@ public:
     Texture2D background;
     Texture2D MenuTexture;
     Texture2D creditsTexture;
+    Texture2D car1Texture;
+    Texture2D car2Texture;
 
     
     float mass;
