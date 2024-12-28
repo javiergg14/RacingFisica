@@ -167,6 +167,11 @@ update_status ModuleGame::Update()
             turboActive = false;
             turboUsedTime = turboDuration;
         }
+
+        // Desactivar turbo si se suelta la tecla SHIFT
+        if (IsKeyReleased(KEY_LEFT_SHIFT)) {
+            turboActive = false;
+        }
     }
     else {
         // Recargar turbo
@@ -234,13 +239,18 @@ Car::Car(PhysBody* i_body, float i_mass)
 void Car::ApplyTurbo()
 {
     float turboForce = 500.0f; // Fuerza adicional del turbo
-    b2Vec2 velocity = m_body->body->GetLinearVelocity();
 
-    if (velocity.Length() > 0) {
-        velocity.Normalize();
-        b2Vec2 turboImpulse = turboForce * velocity;
-        m_body->body->ApplyLinearImpulse(turboImpulse, m_body->body->GetWorldCenter(), true);
-    }
+    // Obtener el vector de dirección "adelante" del coche en el mundo
+    b2Vec2 forwardDirection = m_body->body->GetWorldVector(b2Vec2(0.0f, -1.0f));
+
+    // Normalizar el vector para evitar problemas con magnitud
+    forwardDirection.Normalize();
+
+    // Calcular el impulso basado en la fuerza del turbo
+    b2Vec2 turboImpulse = turboForce * forwardDirection;
+
+    // Aplicar el impulso al centro del coche
+    m_body->body->ApplyLinearImpulse(turboImpulse, m_body->body->GetWorldCenter(), true);
 }
 Circle::~Circle()
 {
