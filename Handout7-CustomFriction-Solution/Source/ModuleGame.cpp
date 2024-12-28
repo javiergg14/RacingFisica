@@ -26,12 +26,9 @@ bool ModuleGame::Start()
     car = App->physics->CreateRectangle(800, 650, 50, 100, b2_dynamicBody); // Dimensiones y tipo
     m_tdTire.emplace_back(std::move(car), mass); // Agregar coche a la lista
 
-    CreateCheckpoints();
-
     car->listener = this;
-    for (PhysBody* checkpoint : checkpoints) {
-        checkpoint->listener = this;
-    }
+    startLineSensor = App->physics->CreateRectangleSensor(800, 650, 50, 10); // Sensor en la línea de meta
+    startLineSensor->listener = this;
 
     return ret;
 }
@@ -100,7 +97,17 @@ update_status ModuleGame::Update()
         MainMenu();
         return UPDATE_CONTINUE;
     }
+    if (hasPassedStartLine)
+    {
+        b2Vec2 carPos = car->body->GetPosition();
+        b2Vec2 sensorPos = startLineSensor->body->GetPosition();
+        float distance = b2Distance(carPos, sensorPos);
 
+        if (distance > 5.0f) // Umbral para estar lejos de la línea de meta
+        {
+            hasPassedStartLine = false;
+        }
+    }
     // Dibujar fondo y texto básico
     DrawTexture(background, 0, 0, WHITE);
     DrawText(TextFormat("Vueltas: %d/3", lapCount), 20, 20, 30, WHITE);
@@ -366,5 +373,18 @@ void Car::Update(float staticFriction, float dynamicFriction)
     // **5. Amortiguación angular**
     float angularImpulse = angularDamping * m_body->body->GetInertia() * -m_body->body->GetAngularVelocity();
     m_body->body->ApplyAngularImpulse(angularImpulse, true);
+}
+void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
+{
+    if (bodyA == startLineSensor && bodyB == car|| bodyA == car && bodyB == startLineSensor)
+    {
+        if (!hasPassedStartLine)
+        {
+            hasPassedStartLine = true; // Evitar dobles conteos
+            lapCount++;
+            LOG("Lap completed! Current lap count: %d", lapCount);
+        }
+    }
+    // Manejo adicional para otros sensores
 }
 

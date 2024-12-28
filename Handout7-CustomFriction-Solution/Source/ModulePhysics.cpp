@@ -51,7 +51,6 @@ update_status ModulePhysics::PreUpdate() {
 			}
 		}
 	}
-
 	return UPDATE_CONTINUE;
 }
 // 
@@ -350,4 +349,22 @@ void ModulePhysics::BeginContact(b2Contact* contact)
 		LOG("Contact with body B");
 		physB->listener->OnCollision(physB, physA);
 	}
+}
+
+PhysBody* ModulePhysics::CreateRectangleSensor(int x, int y, int width, int height) {
+    b2BodyDef bodyDef;
+    bodyDef.type = b2_staticBody;
+    bodyDef.position.Set(PIXEL_TO_METERS(x), PIXEL_TO_METERS(y));
+
+    b2Body* body = world->CreateBody(&bodyDef);
+
+    b2PolygonShape boxShape;
+    boxShape.SetAsBox(PIXEL_TO_METERS(width) * 0.5f, PIXEL_TO_METERS(height) * 0.5f);
+
+    b2FixtureDef fixtureDef;
+    fixtureDef.shape = &boxShape;
+    fixtureDef.isSensor = true;
+
+    b2Fixture* fixture = body->CreateFixture(&fixtureDef);
+    return new PhysBody(fixture); // Retorna PhysBody*
 }
