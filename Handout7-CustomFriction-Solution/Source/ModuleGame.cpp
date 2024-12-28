@@ -23,7 +23,7 @@ bool ModuleGame::Start()
 
     // Crear el coche en el centro de la pantalla
     mass = 100.0f; // Masa del coche
-    car = App->physics->CreateRectangle(500, 500, 50, 100, b2_dynamicBody); // Dimensiones y tipo
+    car = App->physics->CreateRectangle(500, 500, 15, 25, b2_dynamicBody); // Dimensiones y tipo
     m_tdTire.emplace_back(std::move(car), mass); // Agregar coche a la lista
 
     // Configuración de checkpoints
@@ -35,6 +35,8 @@ bool ModuleGame::Start()
     {
         checkpoint->listener = this;
     }
+
+    CreateColliders();
 
     return ret;
 }
@@ -219,7 +221,43 @@ update_status ModuleGame::Update()
         DrawText("Recargando Turbo!", 20, 750, 20, RED);
     }
 
+    for (Collider& collider : m_colliders)
+    {
+        collider.Draw();
+    }
+
     return UPDATE_CONTINUE;
+}
+
+Collider::Collider(PhysBody* i_body)
+    : m_body(i_body)
+{
+}
+
+Collider::~Collider()
+{
+}
+
+void Collider::Draw()
+{
+    if (m_body)
+    {
+        // Obtén los vértices del collider como un vector de b2Vec2
+        const std::vector<b2Vec2>& vertices = m_body->GetVertices();
+
+        // Recorre los vértices para dibujar las líneas
+        for (size_t i = 0; i < vertices.size(); ++i)
+        {
+            b2Vec2 start = vertices[i];
+            b2Vec2 end = vertices[(i + 1) % vertices.size()]; // Conectar el último con el primero
+
+            DrawLine(
+                METERS_TO_PIXELS(start.x), METERS_TO_PIXELS(start.y),
+                METERS_TO_PIXELS(end.x), METERS_TO_PIXELS(end.y),
+                RED
+            );
+        }
+    }
 }
 
 
@@ -284,23 +322,19 @@ void Car::Draw()
     float angle = m_body->body->GetAngle() * RAD2DEG; // Ángulo en grados
 
     // Dimensiones del coche (más pequeñas, en metros)
-    float width = 1.0f;  // Ancho del coche en metros
-    float height = 2.0f; // Alto del coche en metros
-
-    // Convierte las dimensiones a píxeles
-    float widthPixels = METERS_TO_PIXELS(width);
-    float heightPixels = METERS_TO_PIXELS(height);
+    float width = 15.0f;  // Ancho del coche en metros
+    float height = 25.0f; // Alto del coche en metro
 
     // Convierte la posición del coche de metros a píxeles
     float posX = METERS_TO_PIXELS(pos.x);
     float posY = METERS_TO_PIXELS(pos.y);
 
     // Centro de rotación
-    Vector2 origin = { widthPixels / 2.0f, heightPixels / 2.0f };
+    Vector2 origin = { width / 2.0f, height / 2.0f };
 
     // Dibuja el coche con rotación y tamaño reducido
     DrawRectanglePro(
-        { posX, posY, widthPixels, heightPixels }, // Rectángulo con posición en píxeles
+        { posX, posY, width, height }, // Rectángulo con posición en píxeles
         origin,                                   // Punto de origen para la rotación
         angle,                                    // Ángulo de rotación
         RED                                       // Color del coche
@@ -388,11 +422,11 @@ void Circle::Update(float i_staticFricion, float i_dynamicFriction)
 void Car::Update(float staticFriction, float dynamicFriction)
 {
     // Parámetros ajustados del coche
-    float maxSpeed = 3.0f;         // Velocidad máxima reducida
-    float forwardForce = 50.0f;    // Fuerza aplicada para acelerar (muy reducida)
-    float brakingForce = 80.0f;    // Fuerza aplicada para frenar
-    float angularDamping = 0.02f;  // Amortiguación rotacional
-    dynamicFriction = 1.0f;       // Fricción dinámica alta para detener rápidamente
+    float maxSpeed = 2.0f;         // Velocidad máxima reducida
+    float forwardForce = 1.0f;    // Fuerza aplicada para acelerar (muy reducida)
+    float brakingForce = 0.5f;    // Fuerza aplicada para frenar
+    float angularDamping = 0.1f;  // Amortiguación rotacional
+    dynamicFriction = 0.4f;       // Fricción dinámica alta para detener rápidamente
 
     // Obtener la dirección hacia adelante del coche
     b2Vec2 forwardNormal = m_body->body->GetWorldVector(b2Vec2(0, 1));
@@ -406,8 +440,7 @@ void Car::Update(float staticFriction, float dynamicFriction)
         force += b2Vec2(forwardNormal.x * brakingForce, forwardNormal.y * brakingForce); // Aplicar fuerza hacia atrás (frenado)
     }
 
-
-    float turningTorque = 1.3f; // Torque reducido para giros más controlados
+    float turningTorque = 0.05f; // Torque reducido para giros más controlados
 
     if (IsKeyDown(KEY_A)) {
         m_body->body->ApplyTorque(-turningTorque, true); // Gira a la izquierda
@@ -417,14 +450,25 @@ void Car::Update(float staticFriction, float dynamicFriction)
         m_body->body->ApplyTorque(turningTorque, true); // Gira a la derecha
     }
 
-    // **3. Fricción dinámica (frenado natural)**
+    // **2. Fricción estática**
     b2Vec2 velocity = m_body->body->GetLinearVelocity(); // Obtener la velocidad actual
+    if (velocity.LengthSquared() < 0.001f) { // Si el coche está prácticamente quieto
+        float N = mass * 9.8f; // Fuerza normal aproximada
+        float staticFrictionForce = N * staticFriction; // Fuerza de fricción estática
+        b2Vec2 friction = b2Vec2(
+            -std::copysign(std::min(staticFrictionForce, std::abs(force.x)), force.x),
+            -std::copysign(std::min(staticFrictionForce, std::abs(force.y)), force.y)
+        );
+        force += friction; // Añadir la fricción estática a la fuerza total
+    }
+
+    // **3. Fricción dinámica (frenado natural)**
     b2Vec2 friction = b2Vec2(
         -std::copysign(std::min(dynamicFriction, std::abs(velocity.x)), velocity.x), // Fricción en X
         -std::copysign(std::min(dynamicFriction, std::abs(velocity.y)), velocity.y)  // Fricción en Y
     );
 
-    // Aplicar fuerzas al cuerpo (fuerza del usuario + fricción)
+    // Aplicar fuerzas al cuerpo (fuerza del usuario + fricción dinámica)
     m_body->body->ApplyForce(force + friction, m_body->body->GetWorldCenter(), true);
 
     // **4. Limitar velocidad máxima**
@@ -438,10 +482,6 @@ void Car::Update(float staticFriction, float dynamicFriction)
     float angularImpulse = angularDamping * m_body->body->GetInertia() * -m_body->body->GetAngularVelocity();
     m_body->body->ApplyAngularImpulse(angularImpulse, true);
 }
-
-
-
-
 
 void ModuleGame::CreateCheckpoints()
 {
@@ -488,4 +528,20 @@ void ModuleGame::CreateCheckpoints()
     checkpoints.push_back(App->physics->CreateRectangleSensor(928, 800, 75, 10));  // Checkpoint 30: Carretera derecha
 
     checkpoints.push_back(checkpoints[0]); // Checkpoint final es el mismo que el inicio
+}
+
+void ModuleGame::CreateColliders()
+{
+    // Coordenadas de los puntos para los colisionadores
+    // Cada par (x, y) define un punto, y el último conecta al primero (loop)
+    const int chain1Points[] = { 100, 100, 200, 100, 200, 200, 100, 200 }; // Un cuadrado
+    const int chain2Points[] = { 300, 300, 400, 300, 400, 400, 300, 400 }; // Otro cuadrado
+
+    // Crear colisionadores usando la función CreateChain
+    PhysBody* collider1 = App->physics->CreateChain(0, 0, chain1Points, sizeof(chain1Points) / sizeof(int));
+    PhysBody* collider2 = App->physics->CreateChain(0, 0, chain2Points, sizeof(chain2Points) / sizeof(int));
+
+    // Añadir los colisionadores a la lista
+    m_colliders.emplace_back(collider1);
+    m_colliders.emplace_back(collider2);
 }

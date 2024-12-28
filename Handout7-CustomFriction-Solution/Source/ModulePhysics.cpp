@@ -278,11 +278,6 @@ float PhysBody::GetRotation() const
 	return body->GetAngle();
 }
 
-float PhysBody::IncreaseRotation() const
-{
-	return body->GetAngle()+1;
-}
-
 bool PhysBody::Contains(int x, int y) const
 {
 	b2Vec2 p(PIXEL_TO_METERS(x), PIXEL_TO_METERS(y));
@@ -379,4 +374,32 @@ PhysBody* ModulePhysics::CreateRectangleSensor(int x, int y, int width, int heig
 	pbody->height = height;
 
 	return pbody;
+}
+
+std::vector<b2Vec2> PhysBody::GetVertices() const
+{
+	std::vector<b2Vec2> vertices; // Vector para almacenar los vértices
+
+	if (body == nullptr)
+		return vertices;
+
+	// Iterar sobre las fixtures del cuerpo
+	for (b2Fixture* fixture = body->GetFixtureList(); fixture != nullptr; fixture = fixture->GetNext())
+	{
+		const b2Shape* shape = fixture->GetShape();
+
+		// Comprobar si la shape es del tipo b2ChainShape
+		if (shape->GetType() == b2Shape::e_chain)
+		{
+			const b2ChainShape* chainShape = static_cast<const b2ChainShape*>(shape);
+
+			// Recorrer los vértices del shape
+			for (int i = 0; i < chainShape->m_count; ++i)
+			{
+				vertices.emplace_back(chainShape->m_vertices[i]); // Añadir vértices al vector
+			}
+		}
+	}
+
+	return vertices;
 }

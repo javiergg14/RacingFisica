@@ -62,6 +62,20 @@ private:
     int maxFramesWithoutInput;
 };
 
+// Collider class
+class Collider
+{
+public:
+    Collider(PhysBody* i_body);
+    ~Collider();
+
+    void Draw();
+
+private:
+    PhysBody* m_body = nullptr;
+};
+
+
 // ModuleGame class
 class ModuleGame : public Module
 {
@@ -72,6 +86,7 @@ public:
     bool Start();
     update_status Update();
     void CreateCheckpoints();
+    void CreateColliders();
     bool CleanUp();
     bool MainMenu();
     void OnCollision(PhysBody* bodyA, PhysBody* bodyB);
@@ -104,11 +119,13 @@ public:
 
     std::vector<Car> m_tdTire;
 
+    std::vector<Collider> m_colliders;
+
     //Fricción
     std::vector<float> m_staticFrictions = { 0.0f, 0.1f, 0.3f, 0.5f };
     std::vector<float> m_dynamicFrictions = { 0.0f, 0.1f, 0.3f, 0.5f };
-    int m_currentStaticFriction = 0;
-    int m_currentDynamicFriction = 0;
+    int m_currentStaticFriction;
+    int m_currentDynamicFriction;
 
     // Texturas
     Texture2D background;
