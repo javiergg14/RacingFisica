@@ -72,8 +72,6 @@ public:
     bool Start();
     update_status Update();
 
-    void OnCollision(PhysBody* bodyA, PhysBody* bodyB);
-
     bool CleanUp();
     bool MainMenu();
 
@@ -93,11 +91,6 @@ public:
 
     bool gameFinished = false;
     float totalTime = 0.0f;
-    int lapCount = 0;
-
-    bool hasPassedStartLine = false; // Bandera para evitar dobles conteos
-    PhysBody* startLineSensor = nullptr; // Sensor de línea de meta
-    std::vector<PhysBody*> circuitSensors; // Sensores en el circuito
 
     // Checkpoints y coche
     std::vector<PhysBody*> checkpoints;

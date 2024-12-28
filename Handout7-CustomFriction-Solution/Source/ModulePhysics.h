@@ -18,9 +18,7 @@ class PhysBody
 public:
 	PhysBody() : listener(NULL), body(NULL)
 	{}
-	b2Fixture* fixture;
 
-	PhysBody(b2Fixture* fixture) : fixture(fixture), body(fixture->GetBody()) {}
 	//void GetPosition(int& x, int& y) const;
 	void GetPhysicPosition(int& x, int &y) const;
 	float GetRotation() const;
@@ -51,9 +49,7 @@ public:
 	PhysBody* CreateRectangle(int x, int y, int width, int height, b2BodyType Type);
 	PhysBody* CreateChain(int x, int y, const int* points, int size);
 	
-	void BeginContact(b2Contact* contact);
-
-	PhysBody* CreateRectangleSensor(int x, int y, int width, int height);
+	void BeginContact(b2Contact* contact);+
 
 private:
 
