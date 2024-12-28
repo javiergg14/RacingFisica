@@ -26,34 +26,38 @@ bool ModulePhysics::Start()
 	world->SetContactListener(this);
 	return true;
 }
-update_status ModulePhysics::PreUpdate() {
+
+update_status ModulePhysics::PreUpdate()
+{
 	world->Step(1.0f / 60.0f, 6, 2);
 
-	for (b2Contact* c = world->GetContactList(); c; c = c->GetNext()) {
-		if (c->GetFixtureA()->IsSensor() && c->IsTouching()) {
+	for (b2Contact* c = world->GetContactList(); c; c = c->GetNext())
+	{
+		if (c->GetFixtureA()->IsSensor() && c->IsTouching())
+		{
 			b2BodyUserData data1 = c->GetFixtureA()->GetBody()->GetUserData();
-			b2BodyUserData data2 = c->GetFixtureB()->GetBody()->GetUserData();
+			b2BodyUserData data2 = c->GetFixtureB()->GetBody()->GetUserData(); // Cambiado a GetFixtureB()
 
 			PhysBody* pb1 = (PhysBody*)data1.pointer;
 			PhysBody* pb2 = (PhysBody*)data2.pointer;
-			if (pb1 && pb2 && pb1->listener) {
+			if (pb1 && pb2 && pb1->listener)
 				pb1->listener->OnCollision(pb1, pb2);
-			}
 		}
-		else if (c->GetFixtureB()->IsSensor() && c->IsTouching()) {
+		else if (c->GetFixtureB()->IsSensor() && c->IsTouching()) // Agregar verificación para el segundo fixture
+		{
 			b2BodyUserData data1 = c->GetFixtureB()->GetBody()->GetUserData();
-			b2BodyUserData data2 = c->GetFixtureA()->GetBody()->GetUserData();
+			b2BodyUserData data2 = c->GetFixtureA()->GetBody()->GetUserData(); // Cambiado a GetFixtureA()
 
 			PhysBody* pb1 = (PhysBody*)data1.pointer;
 			PhysBody* pb2 = (PhysBody*)data2.pointer;
-			if (pb1 && pb2 && pb1->listener) {
+			if (pb1 && pb2 && pb1->listener)
 				pb1->listener->OnCollision(pb1, pb2);
-			}
 		}
 	}
 
 	return UPDATE_CONTINUE;
 }
+
 // 
 update_status ModulePhysics::PostUpdate()
 {
@@ -350,4 +354,29 @@ void ModulePhysics::BeginContact(b2Contact* contact)
 		LOG("Contact with body B");
 		physB->listener->OnCollision(physB, physA);
 	}
+}
+PhysBody* ModulePhysics::CreateRectangleSensor(int x, int y, int width, int height)
+{
+	b2BodyDef body;
+	body.type = b2_staticBody; // Los sensores deben ser estáticos
+	body.position.Set(PIXEL_TO_METERS(x), PIXEL_TO_METERS(y));
+
+	b2Body* b = world->CreateBody(&body);
+
+	b2PolygonShape box;
+	box.SetAsBox(PIXEL_TO_METERS(width) * 0.5f, PIXEL_TO_METERS(height) * 0.5f);
+
+	b2FixtureDef fixture;
+	fixture.shape = &box;
+	fixture.isSensor = true; // Configurar como sensor
+
+	b->CreateFixture(&fixture);
+
+	PhysBody* pbody = new PhysBody();
+	pbody->body = b;
+	body.userData.pointer = reinterpret_cast<uintptr_t>(pbody);
+	pbody->width = width;
+	pbody->height = height;
+
+	return pbody;
 }

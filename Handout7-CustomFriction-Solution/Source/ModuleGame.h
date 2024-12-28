@@ -49,7 +49,7 @@ public:
     void Draw();
     void Update(float i_staticFriction, float i_dynamicFriction);
 
-public:
+private:
     PhysBody* m_body = nullptr;
     Timer m_lifeTime;
     float mass;
@@ -71,9 +71,10 @@ public:
 
     bool Start();
     update_status Update();
-
+    void CreateCheckpoints();
     bool CleanUp();
     bool MainMenu();
+    void OnCollision(PhysBody* bodyA, PhysBody* bodyB);
 
 public:
     // Estado del juego
@@ -91,6 +92,7 @@ public:
 
     bool gameFinished = false;
     float totalTime = 0.0f;
+    int lapCount = 0;
 
     // Checkpoints y coche
     std::vector<PhysBody*> checkpoints;
@@ -99,6 +101,7 @@ public:
 
     Timer m_creationTimer;
     std::vector<Circle> m_circles;
+
     std::vector<Car> m_tdTire;
 
     //Fricción
@@ -112,5 +115,6 @@ public:
     Texture2D MenuTexture;
     Texture2D creditsTexture;
 
+    
     float mass;
 };
