@@ -33,8 +33,8 @@ bool ModuleGame::Start()
     // Crear el coche en el centro de la pantalla
     mass = 100.0f; // Masa del coche
 
-    car1 = new Car(App->physics->CreateRectangle(500, 500, 15, 25, b2_dynamicBody), mass, 1);
-    car2 = new Car(App->physics->CreateRectangle(500, 500, 15, 25, b2_dynamicBody), mass, 2);
+    car1 = new Car(App->physics->CreateRectangle(500, 500, 15, 25, b2_dynamicBody), mass, 1,this);
+    car2 = new Car(App->physics->CreateRectangle(500, 500, 15, 25, b2_dynamicBody), mass, 2,this);
 
     car1->GetBody()->listener = this;
     car2->GetBody()->listener = this;
@@ -354,8 +354,8 @@ Circle::Circle(PhysBody* i_body, float i_mass)
 	m_lifeTime.Start();
 }
 
-Car::Car(PhysBody* i_body, float i_mass, int i_player)
-    : m_body(i_body), mass(i_mass), player(i_player)
+Car::Car(PhysBody* i_body, float i_mass, int i_player, ModuleGame* moduleGame)
+    : m_body(i_body), mass(i_mass), player(i_player), m_moduleGame(moduleGame)
 {
     m_lifeTime.Start();
 }
@@ -576,8 +576,8 @@ void Car::Update(float staticFriction, float dynamicFriction)
     m_body->body->ApplyForce(force + friction, m_body->body->GetWorldCenter(), true);
     // **4. Limitar velocidad máxima**
  
-    float maxAllowedSpeed = car1TurboActive && player == 1 ? 3.5f : 2.0f;
-        car2TurboActive && player == 2 ? 3.5f : 2.0f; // Velocidad máxima normal o con turbo
+    float maxAllowedSpeed = m_moduleGame->car1TurboActive && player == 1 ? 3.5f : 2.0f;
+       m_moduleGame-> car2TurboActive && player == 2 ? 3.5f : 2.0f; // Velocidad máxima normal o con turbo
 
     if (velocity.Length() > maxAllowedSpeed) {
         velocity.Normalize();

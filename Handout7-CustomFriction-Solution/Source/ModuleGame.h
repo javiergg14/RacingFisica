@@ -39,7 +39,9 @@ private:
 class Car
 {
 public:
-    Car(PhysBody* i_body, float i_mass, int i_player);
+    // Modificación en el constructor para incluir una referencia o puntero a ModuleGame
+    Car(PhysBody* i_body, float i_mass, int i_player, ModuleGame* moduleGame);
+
     void ApplyTurbo();
     ~Car();
     float GetLifeTime() const;
@@ -48,8 +50,8 @@ public:
     void Update(float i_staticFriction, float i_dynamicFriction);
     PhysBody* GetBody();
     Module* module = nullptr;
-private:
 
+private:
     PhysBody* m_body = nullptr;
     Timer m_lifeTime;
     float mass;
@@ -61,6 +63,9 @@ private:
     int framesWithoutInput;
     int maxFramesWithoutInput;
     int player;
+
+    // Puntero a ModuleGame
+    ModuleGame* m_moduleGame = nullptr;
 };
 
 // Collider class
