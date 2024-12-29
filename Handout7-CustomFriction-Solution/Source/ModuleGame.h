@@ -41,12 +41,13 @@ private:
 class Car
 {
 public:
-    Car(PhysBody* i_body, float i_mass);
+    Car(PhysBody* i_body, float i_mass, int i_player);
     void ApplyTurbo();
     ~Car();
 
     float GetLifeTime() const;
-    void Draw();
+    int GetPlayer();
+    void Draw(Texture2D texture);
     void Update(float i_staticFriction, float i_dynamicFriction);
 
 private:
@@ -60,9 +61,23 @@ private:
     float staticFriction;
     int framesWithoutInput;
     int maxFramesWithoutInput;
+    int player;
 };
 
-// ModuleGame class
+// Collider class
+class Collider
+{
+public:
+    Collider(PhysBody* i_body);
+    ~Collider();
+
+    void Draw();
+
+private:
+    PhysBody* m_body = nullptr;
+};
+
+
 class ModuleGame : public Module
 {
 public:
@@ -72,6 +87,7 @@ public:
     bool Start();
     update_status Update();
     void CreateCheckpoints();
+    void CreateColliders();
     bool CleanUp();
     bool MainMenu();
     void OnCollision(PhysBody* bodyA, PhysBody* bodyB);
@@ -79,9 +95,12 @@ public:
 public:
     // Estado del juego
     bool isMenuActive = true;
+    bool isMapSelectorActive = false;
     bool inCredits = false;
     int selectedMenuOption = 0;
+    int selectedMapIndex = 0;
     bool showCredits = false;
+    bool isEnterPressed = false;
 
     //Variables de Turbo
     float turboRechargeTimer = 0.0f;
@@ -104,17 +123,26 @@ public:
 
     std::vector<Car> m_tdTire;
 
+    std::vector<Collider> m_colliders;
+
     //Fricción
     std::vector<float> m_staticFrictions = { 0.0f, 0.1f, 0.3f, 0.5f };
     std::vector<float> m_dynamicFrictions = { 0.0f, 0.1f, 0.3f, 0.5f };
-    int m_currentStaticFriction = 0;
-    int m_currentDynamicFriction = 0;
+    int m_currentStaticFriction;
+    int m_currentDynamicFriction;
 
     // Texturas
-    Texture2D background;
+    Texture2D mapTextures[3];
+    Texture2D mapSelectorBgTexture;
+    Texture2D mapSelectorTextures[3];
     Texture2D MenuTexture;
     Texture2D creditsTexture;
+    Texture2D car1Texture;
+    Texture2D car2Texture;
 
     
     float mass;
+
+    Car* car1;
+    Car* car2;
 };
