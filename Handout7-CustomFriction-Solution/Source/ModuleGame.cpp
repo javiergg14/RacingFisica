@@ -194,6 +194,7 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
     {
         if (bodyA == checkpoints[i] || bodyB == checkpoints[i])
         {
+            printf("hola");
             if (i == currentCheckpointIndex)
             {
                 LOG("Checkpoint %d alcanzado!", currentCheckpointIndex + 1);
