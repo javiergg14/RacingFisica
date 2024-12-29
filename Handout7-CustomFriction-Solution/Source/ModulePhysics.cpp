@@ -4,6 +4,8 @@
 #include "ModulePhysics.h"
 
 #include <math.h>
+#include <chrono>
+#include <thread>
 
 
 
@@ -27,8 +29,13 @@ bool ModulePhysics::Start()
 	return true;
 }
 
+// 
 update_status ModulePhysics::PreUpdate()
 {
+	// Inicia un temporizador para medir la duración de cada frame
+	static auto lastFrameTime = std::chrono::high_resolution_clock::now();
+
+	// Llama al Step del mundo de Box2D
 	world->Step(1.0f / 60.0f, 6, 2);
 
 	for (b2Contact* c = world->GetContactList(); c; c = c->GetNext())
@@ -36,17 +43,17 @@ update_status ModulePhysics::PreUpdate()
 		if (c->GetFixtureA()->IsSensor() && c->IsTouching())
 		{
 			b2BodyUserData data1 = c->GetFixtureA()->GetBody()->GetUserData();
-			b2BodyUserData data2 = c->GetFixtureB()->GetBody()->GetUserData(); // Cambiado a GetFixtureB()
+			b2BodyUserData data2 = c->GetFixtureB()->GetBody()->GetUserData();
 
 			PhysBody* pb1 = (PhysBody*)data1.pointer;
 			PhysBody* pb2 = (PhysBody*)data2.pointer;
 			if (pb1 && pb2 && pb1->listener)
 				pb1->listener->OnCollision(pb1, pb2);
 		}
-		else if (c->GetFixtureB()->IsSensor() && c->IsTouching()) // Agregar verificación para el segundo fixture
+		else if (c->GetFixtureB()->IsSensor() && c->IsTouching())
 		{
 			b2BodyUserData data1 = c->GetFixtureB()->GetBody()->GetUserData();
-			b2BodyUserData data2 = c->GetFixtureA()->GetBody()->GetUserData(); // Cambiado a GetFixtureA()
+			b2BodyUserData data2 = c->GetFixtureA()->GetBody()->GetUserData();
 
 			PhysBody* pb1 = (PhysBody*)data1.pointer;
 			PhysBody* pb2 = (PhysBody*)data2.pointer;
@@ -54,112 +61,27 @@ update_status ModulePhysics::PreUpdate()
 				pb1->listener->OnCollision(pb1, pb2);
 		}
 	}
+
+	// Calcula el tiempo transcurrido desde el último frame
+	auto currentTime = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<float> elapsedTime = currentTime - lastFrameTime;
+
+	// Duración ideal de un frame (1/60 segundos)
+	const float frameDuration = 1.0f / 60.0f;
+
+	// Si el frame actual se procesó más rápido que el objetivo, duerme el tiempo restante
+	if (elapsedTime.count() < frameDuration) {
+		std::this_thread::sleep_for(std::chrono::duration<float>(frameDuration - elapsedTime.count()));
+	}
+
+	// Actualiza el tiempo del último frame
+	lastFrameTime = std::chrono::high_resolution_clock::now();
 
 	return UPDATE_CONTINUE;
 }
 
-// 
 update_status ModulePhysics::PostUpdate()
 {
-	if (IsKeyPressed(KEY_F1))
-	{
-		debug = !debug;
-	}
-
-	if (!debug)
-	{
-		return UPDATE_CONTINUE;
-	}
-
-	// Iterar sobre todos los cuerpos en el mundo
-	for (b2Body* b = world->GetBodyList(); b; b = b->GetNext())
-	{
-		for (b2Fixture* f = b->GetFixtureList(); f; f = f->GetNext())
-		{
-			// Comprobar si la fixture es un sensor
-			if (f->IsSensor())
-			{
-				b2PolygonShape* polygonShape = (b2PolygonShape*)f->GetShape();
-				b2Vec2 prev, v;
-
-				int32 count = polygonShape->m_count;
-				for (int32 i = 0; i < count; ++i)
-				{
-					v = b->GetWorldPoint(polygonShape->m_vertices[i]);
-					if (i > 0)
-						DrawLine(METERS_TO_PIXELS(prev.x), METERS_TO_PIXELS(prev.y), METERS_TO_PIXELS(v.x), METERS_TO_PIXELS(v.y), BLUE);
-
-					prev = v;
-				}
-
-				v = b->GetWorldPoint(polygonShape->m_vertices[0]);
-				DrawLine(METERS_TO_PIXELS(prev.x), METERS_TO_PIXELS(prev.y), METERS_TO_PIXELS(v.x), METERS_TO_PIXELS(v.y), BLUE);
-
-				continue; // Evitar dibujar como otros tipos
-			}
-
-			// Dibujar según el tipo de fixture
-			switch (f->GetType())
-			{
-			case b2Shape::e_circle:
-			{
-				b2CircleShape* shape = (b2CircleShape*)f->GetShape();
-				b2Vec2 pos = f->GetBody()->GetPosition();
-				DrawCircle(METERS_TO_PIXELS(pos.x), METERS_TO_PIXELS(pos.y), (float)METERS_TO_PIXELS(shape->m_radius), Color{ 0, 0, 0, 128 });
-			}
-			break;
-
-			case b2Shape::e_polygon:
-			{
-				b2PolygonShape* polygonShape = (b2PolygonShape*)f->GetShape();
-				int32 count = polygonShape->m_count;
-				b2Vec2 prev, v;
-
-				for (int32 i = 0; i < count; ++i)
-				{
-					v = b->GetWorldPoint(polygonShape->m_vertices[i]);
-					if (i > 0)
-						DrawLine(METERS_TO_PIXELS(prev.x), METERS_TO_PIXELS(prev.y), METERS_TO_PIXELS(v.x), METERS_TO_PIXELS(v.y), RED);
-
-					prev = v;
-				}
-
-				v = b->GetWorldPoint(polygonShape->m_vertices[0]);
-				DrawLine(METERS_TO_PIXELS(prev.x), METERS_TO_PIXELS(prev.y), METERS_TO_PIXELS(v.x), METERS_TO_PIXELS(v.y), RED);
-			}
-			break;
-
-			case b2Shape::e_chain:
-			{
-				b2ChainShape* shape = (b2ChainShape*)f->GetShape();
-				b2Vec2 prev, v;
-
-				for (int32 i = 0; i < shape->m_count; ++i)
-				{
-					v = b->GetWorldPoint(shape->m_vertices[i]);
-					if (i > 0)
-						DrawLine(METERS_TO_PIXELS(prev.x), METERS_TO_PIXELS(prev.y), METERS_TO_PIXELS(v.x), METERS_TO_PIXELS(v.y), GREEN);
-
-					prev = v;
-				}
-
-				v = b->GetWorldPoint(shape->m_vertices[0]);
-				DrawLine(METERS_TO_PIXELS(prev.x), METERS_TO_PIXELS(prev.y), METERS_TO_PIXELS(v.x), METERS_TO_PIXELS(v.y), GREEN);
-			}
-			break;
-
-			case b2Shape::e_edge:
-			{
-				b2EdgeShape* shape = (b2EdgeShape*)f->GetShape();
-				b2Vec2 v1 = b->GetWorldPoint(shape->m_vertex1);
-				b2Vec2 v2 = b->GetWorldPoint(shape->m_vertex2);
-				DrawLine(METERS_TO_PIXELS(v1.x), METERS_TO_PIXELS(v1.y), METERS_TO_PIXELS(v2.x), METERS_TO_PIXELS(v2.y), BLUE);
-			}
-			break;
-			}
-		}
-	}
-
 	return UPDATE_CONTINUE;
 }
 

@@ -43,7 +43,7 @@ public:
 
     bool Start();
     update_status PreUpdate();
-    update_status PostUpdate();
+    virtual update_status PostUpdate() override;
     bool CleanUp();
 
     PhysBody* CreateCircle(int x, int y, int radius);

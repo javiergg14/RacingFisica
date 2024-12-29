@@ -369,8 +369,8 @@ Car::Car(PhysBody* i_body, float i_mass, int i_player, ModuleGame* moduleGame)
     m_lifeTime.Start();
 }
 void Car::ApplyTurbo() {
-    float turboForce = 2000.0f; // Fuerza adicional del turbo
-    float turboMaxSpeed = 10.0f; // Velocidad máxima durante el turbo (más alta que la velocidad normal)
+    float turboForce = 200000.0f; // Fuerza adicional del turbo
+    float turboMaxSpeed = 100000.0f; // Velocidad máxima durante el turbo (más alta que la velocidad normal)
 
     // Obtener el vector de dirección "adelante" del coche en el mundo
     b2Vec2 forwardDirection = m_body->body->GetWorldVector(b2Vec2(0.0f, -1.0f));
@@ -519,12 +519,12 @@ void Circle::Update(float i_staticFricion, float i_dynamicFriction)
 
 void Car::Update(float staticFriction, float dynamicFriction)
 {
+
     // Parámetros ajustados del coche
-    float maxSpeed = 2.0f;         // Velocidad máxima reducida
-    float forwardForce = 1.0f;    // Fuerza aplicada para acelerar (muy reducida)
-    float brakingForce = 0.5f;    // Fuerza aplicada para frenar
-    float angularDamping = 0.1f;  // Amortiguación rotacional
-    dynamicFriction = 0.15f;       // Fricción dinámica alta para detener rápidamente
+    float forwardForce = 50.0f;  // Fuerza aplicada para acelerar
+    float brakingForce = 25.0f;  // Fuerza aplicada para frenar
+    float angularDamping = 0.1f; // Amortiguación rotacional
+    dynamicFriction = 0.2f;    // Fricción dinámica ajustada
 
     // Obtener la dirección hacia adelante del coche
     b2Vec2 forwardNormal = m_body->body->GetWorldVector(b2Vec2(0, 1));
@@ -539,10 +539,10 @@ void Car::Update(float staticFriction, float dynamicFriction)
             force += b2Vec2(forwardNormal.x * brakingForce, forwardNormal.y * brakingForce);
         }
         if (IsKeyDown(KEY_A)) {
-            m_body->body->ApplyTorque(-0.03f, true); // Gira a la izquierda
+            m_body->body->ApplyTorque(-0.07f, true); // Gira a la izquierda
         }
         if (IsKeyDown(KEY_D)) {
-            m_body->body->ApplyTorque(0.03f, true); // Gira a la derecha
+            m_body->body->ApplyTorque(0.07f, true); // Gira a la derecha
         }
     }
     else if (player == 2) { // Controles de flechas
@@ -553,10 +553,10 @@ void Car::Update(float staticFriction, float dynamicFriction)
             force += b2Vec2(forwardNormal.x * brakingForce, forwardNormal.y * brakingForce);
         }
         if (IsKeyDown(KEY_LEFT)) {
-            m_body->body->ApplyTorque(-0.03f, true); // Gira a la izquierda
+            m_body->body->ApplyTorque(-0.07f , true); // Gira a la izquierda
         }
         if (IsKeyDown(KEY_RIGHT)) {
-            m_body->body->ApplyTorque(0.03f, true); // Gira a la derecha
+            m_body->body->ApplyTorque(0.07f, true); // Gira a la derecha
         }
     }
 
@@ -564,7 +564,7 @@ void Car::Update(float staticFriction, float dynamicFriction)
     b2Vec2 velocity = m_body->body->GetLinearVelocity(); // Obtener la velocidad actual
     if (velocity.LengthSquared() < 0.001f) { // Si el coche está prácticamente quieto
         float N = mass * 9.8f; // Fuerza normal aproximada
-        float staticFrictionForce = N * staticFriction; // Fuerza de fricción estática
+        float staticFrictionForce = N * staticFriction; // Fuerza de fricción estática ajustada
         b2Vec2 friction = b2Vec2(
             -std::copysign(std::min(staticFrictionForce, std::abs(force.x)), force.x),
             -std::copysign(std::min(staticFrictionForce, std::abs(force.y)), force.y)
@@ -580,9 +580,9 @@ void Car::Update(float staticFriction, float dynamicFriction)
 
     // Aplicar fuerzas al cuerpo (fuerza del usuario + fricción dinámica)
     m_body->body->ApplyForce(force + friction, m_body->body->GetWorldCenter(), true);
+
     // **4. Limitar velocidad máxima**
- 
-    float maxAllowedSpeed = (m_moduleGame->car1TurboActive && player == 1) || 
+    float maxAllowedSpeed = (m_moduleGame->car1TurboActive && player == 1) ||
         (m_moduleGame->car2TurboActive && player == 2) ? 3.5f : 2.0f;
 
     if (velocity.Length() > maxAllowedSpeed) {
@@ -595,6 +595,7 @@ void Car::Update(float staticFriction, float dynamicFriction)
     float angularImpulse = angularDamping * m_body->body->GetInertia() * -m_body->body->GetAngularVelocity();
     m_body->body->ApplyAngularImpulse(angularImpulse, true);
 }
+
 
 void ModuleGame::CreateCheckpoints()
 {
