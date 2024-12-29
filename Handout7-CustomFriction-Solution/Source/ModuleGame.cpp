@@ -26,6 +26,8 @@ bool ModuleGame::Start()
     mapSelectorTextures[0] = LoadTexture("Assets/map1selector.png");
     mapSelectorTextures[1] = LoadTexture("Assets/map2selector.png");
     mapSelectorTextures[2] = LoadTexture("Assets/map3selector.png");
+    Selection = LoadSound("Assets/Sounds/SelectionMade.wav");
+    SwitchOption = LoadSound("Assets/Sounds/SwitchOption.wav");
 
     LOG("Loading Intro assets");
     bool ret = true;
@@ -87,14 +89,17 @@ bool ModuleGame::MainMenu()
         // Manejo de entrada del menú
         if (IsKeyPressed(KEY_DOWN))
         {
+            PlaySound(SwitchOption);
             selectedMenuOption = (selectedMenuOption + 1) % totalOptions;
         }
         else if (IsKeyPressed(KEY_UP))
         {
+            PlaySound(SwitchOption);
             selectedMenuOption = (selectedMenuOption - 1 + totalOptions) % totalOptions;
         }
         else if (IsKeyPressed(KEY_ENTER) && !isEnterPressed) // Verificar si ENTER no está bloqueado
         {
+            PlaySound(Selection);
             isEnterPressed = true; // Bloquea la tecla ENTER
             switch (selectedMenuOption)
             {
@@ -150,12 +155,15 @@ bool ModuleGame::MainMenu()
         }
 
         if (IsKeyPressed(KEY_RIGHT)) {
+            PlaySound(SwitchOption);
             selectedMapIndex = (selectedMapIndex + 1) % 3;
         }
         else if (IsKeyPressed(KEY_LEFT)) {
             selectedMapIndex = (selectedMapIndex - 1 + 3) % 3;
+            PlaySound(SwitchOption);
         }
         else if (IsKeyPressed(KEY_ENTER) && !isEnterPressed) {
+            PlaySound(Selection);
             isMapSelectorActive = false;
             CreateColliders();
             CreateCheckpoints();
@@ -433,9 +441,6 @@ void Car::Draw(Texture2D texture)
         origin, angle, WHITE);
 }
 
-
-
-
 void Circle::Update(float i_staticFricion, float i_dynamicFriction)
 {
     float forceX = 0.3f; // Fuerza para el movimiento en el eje X
@@ -576,8 +581,8 @@ void Car::Update(float staticFriction, float dynamicFriction)
     m_body->body->ApplyForce(force + friction, m_body->body->GetWorldCenter(), true);
     // **4. Limitar velocidad máxima**
  
-    float maxAllowedSpeed = m_moduleGame->car1TurboActive && player == 1 ? 3.5f : 2.0f;
-       m_moduleGame-> car2TurboActive && player == 2 ? 3.5f : 2.0f; // Velocidad máxima normal o con turbo
+    float maxAllowedSpeed = (m_moduleGame->car1TurboActive && player == 1) || 
+        (m_moduleGame->car2TurboActive && player == 2) ? 3.5f : 2.0f;
 
     if (velocity.Length() > maxAllowedSpeed) {
         velocity.Normalize();

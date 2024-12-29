@@ -96,6 +96,10 @@ public:
     void OnCollision(PhysBody* bodyA, PhysBody* bodyB);
 
 public:
+
+    //Sounds
+    Sound Selection;
+    Sound SwitchOption;
     // Estado del juego
     bool isMenuActive = true;
     bool isMapSelectorActive = false;
