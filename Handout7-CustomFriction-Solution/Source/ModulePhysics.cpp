@@ -229,7 +229,7 @@ PhysBody* ModulePhysics::CreateChain(int x, int y, const int* points, int size)
 	PhysBody* pbody = new PhysBody();
 
 	b2BodyDef body;
-	body.type = b2_dynamicBody;
+	body.type = b2_staticBody;
 	body.position.Set(PIXEL_TO_METERS(x), PIXEL_TO_METERS(y));
 	body.userData.pointer = reinterpret_cast<uintptr_t>(pbody);
 

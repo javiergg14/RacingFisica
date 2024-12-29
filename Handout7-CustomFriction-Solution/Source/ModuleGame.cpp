@@ -36,6 +36,9 @@ bool ModuleGame::Start()
     car1 = new Car(App->physics->CreateRectangle(500, 500, 15, 25, b2_dynamicBody), mass, 1);
     car2 = new Car(App->physics->CreateRectangle(500, 500, 15, 25, b2_dynamicBody), mass, 2);
 
+    car1->GetBody()->listener = this;
+    car2->GetBody()->listener = this;
+
     m_tdTire.push_back(*car1); // Agregar coche 1
     m_tdTire.push_back(*car2); // Agregar coche 2
 
@@ -47,8 +50,6 @@ bool ModuleGame::Start()
     {
         checkpoint->listener = this;
     }
-
-    CreateColliders();
 
     return ret;
 }
@@ -159,6 +160,7 @@ bool ModuleGame::MainMenu()
         }
         else if (IsKeyPressed(KEY_ENTER) && !isEnterPressed) {
             isMapSelectorActive = false;
+            CreateColliders();
             // Aquí inicias el juego con el mapa seleccionado
         }
     }
@@ -172,44 +174,51 @@ bool ModuleGame::MainMenu()
 // OnCollision para manejar colisiones
 void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 {
-    if (bodyA == car || bodyB == car)
+    // Verificar colisiones con car1 y car2
+    if (bodyA == car1->GetBody() || bodyB == car1->GetBody())
     {
-        for (size_t i = 0; i < checkpoints.size(); ++i)
+        LOG("Colisión detectada para el coche 1");
+    }
+    else if (bodyA == car2->GetBody() || bodyB == car2->GetBody())
+    {
+        LOG("Colisión detectada para el coche 2");
+    }
+
+    // Manejo de otros cuerpos físicos, como checkpoints
+    for (size_t i = 0; i < checkpoints.size(); ++i)
+    {
+        if (bodyA == checkpoints[i] || bodyB == checkpoints[i])
         {
-            if (bodyA == checkpoints[i] || bodyB == checkpoints[i])
+            if (i == currentCheckpointIndex)
             {
-                // Checkpoint esperado
-                if (i == currentCheckpointIndex)
-                {
-                    LOG("Checkpoint %d alcanzado!", currentCheckpointIndex + 1);
-                    currentCheckpointIndex++;
+                LOG("Checkpoint %d alcanzado!", currentCheckpointIndex + 1);
+                currentCheckpointIndex++;
 
-                    // Si alcanzamos el último checkpoint y volvemos al de inicio/fin
-                    if (currentCheckpointIndex >= checkpoints.size())
+                // Si alcanzamos el último checkpoint y volvemos al de inicio/fin
+                if (currentCheckpointIndex >= checkpoints.size())
+                {
+                    // Validar si estamos en el checkpoint de inicio/fin
+                    if (i == 0)
                     {
-                        // Validar si estamos en el checkpoint de inicio/fin
-                        if (i == 0)
+                        lapCount++;
+                        LOG("Vuelta Completada! Total de Vueltas: %d", lapCount);
+
+                        if (lapCount == 3)
                         {
-                            lapCount++;
-                            LOG("Vuelta Completada! Total de Vueltas: %d", lapCount);
-
-                            if (lapCount == 3)
-                            {
-                                gameFinished = true;
-                                totalTime = m_creationTimer.ReadSec();
-                            }
-
+                            gameFinished = true;
+                            totalTime = m_creationTimer.ReadSec();
                         }
-                        currentCheckpointIndex = 0; // Reiniciar al primer checkpoint
-                    }
-                }
-                else
-                {
-                    LOG("Checkpoint %d ignorado.", i + 1);
-                }
 
-                break;
+                    }
+                    currentCheckpointIndex = 0; // Reiniciar al primer checkpoint
+                }
             }
+            else
+            {
+                LOG("Checkpoint %d ignorado.", i + 1);
+            }
+
+            break;
         }
     }
 }
@@ -624,14 +633,99 @@ void ModuleGame::CreateColliders()
 {
     // Coordenadas de los puntos para los colisionadores
     // Cada par (x, y) define un punto, y el último conecta al primero (loop)
-    const int chain1Points[] = { 100, 100, 200, 100, 200, 200, 100, 200 }; // Un cuadrado
-    const int chain2Points[] = { 300, 300, 400, 300, 400, 400, 300, 400 }; // Otro cuadrado
+    const int chain1Points[] = {
+    24, 155,
+    67, 73,
+    164, 13,
+    1213, 12,
+    1352, 136,
+    1352, 321,
+    1350, 864,
+    1296, 963,
+    1212, 1003,
+    878, 1007,
+    792, 966,
+    729, 870,
+    723, 618,
+    658, 609,
+    652, 870,
+    607, 953,
+    520, 1007,
+    160, 1013,
+    38, 918,
+    16, 770,
+    24, 176,
+    23, 156
+    };
+    const int chain2Points[] = {
+    21, 168,
+    23, 870,
+    76, 970,
+    163, 1011,
+    535, 1016,
+    636, 955,
+    686, 871,
+    686, 618,
+    683, 876,
+    738, 976,
+    853, 1016,
+    1208, 1015,
+    1306, 961,
+    1353, 876,
+    1353, 160,
+    1310, 63,
+    1215, 15,
+    823, 13,
+    711, 83,
+    683, 146,
+    685, 391,
+    683, 120,
+    565, 11,
+    153, 10,
+    56, 71,
+    20, 168
+    };
+    const int chain3Points[] = {
+    24, 157,
+    22, 878,
+    67, 967,
+    162, 1017,
+    1190, 1014,
+    1298, 952,
+    1332, 870,
+    1338, 577,
+    1262, 467,
+    1190, 431,
+    460, 431,
+    1187, 430,
+    1285, 391,
+    1350, 294,
+    1345, 151,
+    1300, 64,
+    1217, 11,
+    171, 8,
+    67, 64,
+    25, 157
+    };
 
-    // Crear colisionadores usando la función CreateChain
-    PhysBody* collider1 = App->physics->CreateChain(0, 0, chain1Points, sizeof(chain1Points) / sizeof(int));
-    PhysBody* collider2 = App->physics->CreateChain(0, 0, chain2Points, sizeof(chain2Points) / sizeof(int));
 
-    // Añadir los colisionadores a la lista
-    m_colliders.emplace_back(collider1);
-    m_colliders.emplace_back(collider2);
+    if (selectedMapIndex == 0)
+    {
+        PhysBody* collider1 = App->physics->CreateChain(0, 0, chain1Points, sizeof(chain1Points) / sizeof(int));  
+        m_colliders.emplace_back(collider1);
+    }
+    else if (selectedMapIndex == 1)
+    {
+        PhysBody* collider2 = App->physics->CreateChain(0, 0, chain2Points, sizeof(chain2Points) / sizeof(int));
+        m_colliders.emplace_back(collider2);
+    }
+    else if (selectedMapIndex == 2)
+    {
+        PhysBody* collider3 = App->physics->CreateChain(0, 0, chain3Points, sizeof(chain3Points) / sizeof(int));
+        m_colliders.emplace_back(collider3);
+    }
+}
+PhysBody* Car::GetBody()
+{
+    return m_body;
 }

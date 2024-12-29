@@ -49,6 +49,7 @@ public:
     int GetPlayer();
     void Draw(Texture2D texture);
     void Update(float i_staticFriction, float i_dynamicFriction);
+    PhysBody* GetBody();
 
 private:
     PhysBody* m_body = nullptr;
