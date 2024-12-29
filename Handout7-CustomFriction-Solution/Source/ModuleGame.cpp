@@ -129,17 +129,15 @@ bool ModuleGame::MainMenu()
             isMenuActive = true;
             isMapSelectorActive = false;
         }
-
         DrawTexture(mapSelectorBgTexture, 0, 0, WHITE);
-
         Vector2 mapPositions[3] = {
-            {100, 400},
-            {400, 400},
-            {700, 400}
+            {200, 400},
+            {650, 400},
+            {1100, 400}
         };
 
         for (int i = 0; i < 3; ++i) {
-            float scale = (i == selectedMapIndex) ? 1.5f : 1.0f;
+            float scale = (i == selectedMapIndex) ? 1.25f : 1.0f;
             Vector2 position = mapPositions[i];
             Rectangle source = { 0, 0, (float)mapSelectorTextures[i].width, (float)mapSelectorTextures[i].height };
             Rectangle dest = {
@@ -242,50 +240,71 @@ update_status ModuleGame::Update()
         return UPDATE_CONTINUE;
     }
 
-    // Turbo: actualizar estado y recargar si es necesario
-    if (turboActive) {
-        turboUsedTime += GetFrameTime();
-        if (turboUsedTime >= turboDuration) {
-            turboActive = false;
-            turboUsedTime = turboDuration;
+    // Turbo para car1
+    if (IsKeyPressed(KEY_LEFT_SHIFT) && car1TurboRechargeTimer >= turboDuration) {
+        car1TurboActive = true;
+        car1TurboRechargeTimer = 0.0f;
+    }
+    if (car1TurboActive) {
+        car1TurboUsedTime += GetFrameTime();
+        if (car1TurboUsedTime >= turboDuration) {
+            car1TurboActive = false;
+            car1TurboUsedTime = turboDuration;
         }
-
-        // Desactivar turbo si se suelta la tecla SHIFT
         if (IsKeyReleased(KEY_LEFT_SHIFT)) {
-            turboActive = false;
+            car1TurboActive = false;
         }
     }
     else {
-        // Recargar turbo
-        turboRechargeTimer += GetFrameTime();
-        if (turboRechargeTimer > turboRechargeDuration) {
-            turboRechargeTimer = turboRechargeDuration;
+        car1TurboRechargeTimer += GetFrameTime();
+        if (car1TurboRechargeTimer > turboRechargeDuration) {
+            car1TurboRechargeTimer = turboRechargeDuration;
         }
-        // Reducir tiempo usado si no se está activando
-        if (turboUsedTime > 0.0f) {
-            turboUsedTime -= GetFrameTime() * (turboDuration / turboRechargeDuration);
-            if (turboUsedTime < 0.0f) {
-                turboUsedTime = 0.0f;
+        if (car1TurboUsedTime > 0.0f) {
+            car1TurboUsedTime -= GetFrameTime() * (turboDuration / turboRechargeDuration);
+            if (car1TurboUsedTime < 0.0f) {
+                car1TurboUsedTime = 0.0f;
             }
         }
     }
 
-    // Activar turbo si se presiona la tecla y hay energía
-    if (IsKeyPressed(KEY_LEFT_SHIFT) && turboRechargeTimer >= turboDuration) {
-        turboActive = true;
-        turboRechargeTimer = 0.0f;
+    // Turbo para car2
+    if (IsKeyPressed(KEY_RIGHT_SHIFT) && car2TurboRechargeTimer >= turboDuration) {
+        car2TurboActive = true;
+        car2TurboRechargeTimer = 0.0f;
+    }
+    if (car2TurboActive) {
+        car2TurboUsedTime += GetFrameTime();
+        if (car2TurboUsedTime >= turboDuration) {
+            car2TurboActive = false;
+            car2TurboUsedTime = turboDuration;
+        }
+        if (IsKeyReleased(KEY_RIGHT_SHIFT)) {
+            car2TurboActive = false;
+        }
+    }
+    else {
+        car2TurboRechargeTimer += GetFrameTime();
+        if (car2TurboRechargeTimer > turboRechargeDuration) {
+            car2TurboRechargeTimer = turboRechargeDuration;
+        }
+        if (car2TurboUsedTime > 0.0f) {
+            car2TurboUsedTime -= GetFrameTime() * (turboDuration / turboRechargeDuration);
+            if (car2TurboUsedTime < 0.0f) {
+                car2TurboUsedTime = 0.0f;
+            }
+        }
     }
 
     // Dibujar coches y aplicar turbo
     for (Car& c : m_tdTire)
     {
-        if (turboActive) {
+        if ((c.GetPlayer() == 1 && car1TurboActive) || (c.GetPlayer() == 2 && car2TurboActive)) {
             c.ApplyTurbo();
         }
         c.Update(m_staticFrictions[m_currentStaticFriction], m_dynamicFrictions[m_currentDynamicFriction]);
 
-        if (c.GetPlayer() == 1)
-        {
+        if (c.GetPlayer() == 1) {
             c.Draw(car1Texture);
         }
         else if (c.GetPlayer() == 2) {
@@ -293,25 +312,15 @@ update_status ModuleGame::Update()
         }
     }
 
-    // **Indicador del Turbo**
-    float usedPercentage = turboUsedTime / turboDuration;
+    // Indicadores de turbo para car1
+    float car1UsedPercentage = car1TurboUsedTime / turboDuration;
+    DrawRectangle(50, 800, 20, 150, LIGHTGRAY);
+    DrawRectangle(50, 800 + 150 * car1UsedPercentage, 20, 150 * (1.0f - car1UsedPercentage), BLUE);
 
-    // Barra de recarga del turbo
-    DrawRectangle(50, 800, 20, 150, LIGHTGRAY); // Fondo de la barra
-    DrawRectangle(50, 800 + 150 * usedPercentage, 20, 150 * (1.0f - usedPercentage), BLUE); // Turbo restante
-
-    // Indicador textual
-    if (turboActive) {
-        DrawText("Turbo Activo!", 20, 750, 20, GREEN);
-    }
-    else {
-        DrawText("Recargando Turbo!", 20, 750, 20, RED);
-    }
-
-    for (Collider& collider : m_colliders)
-    {
-        collider.Draw();
-    }
+    // Indicadores de turbo para car2
+    float car2UsedPercentage = car2TurboUsedTime / turboDuration;
+    DrawRectangle(100, 800, 20, 150, LIGHTGRAY);
+    DrawRectangle(100, 800 + 150 * car2UsedPercentage, 20, 150 * (1.0f - car2UsedPercentage), RED);
 
     return UPDATE_CONTINUE;
 }
@@ -362,7 +371,8 @@ Car::Car(PhysBody* i_body, float i_mass, int i_player)
 }
 void Car::ApplyTurbo()
 {
-    float turboForce = 500.0f; // Fuerza adicional del turbo
+    float turboForce = 2000.0f; // Fuerza adicional del turbo
+    float maxTurboSpeed = 20.0f; // Velocidad máxima adicional permitida durante el turbo
 
     // Obtener el vector de dirección "adelante" del coche en el mundo
     b2Vec2 forwardDirection = m_body->body->GetWorldVector(b2Vec2(0.0f, -1.0f));
@@ -375,6 +385,16 @@ void Car::ApplyTurbo()
 
     // Aplicar el impulso al centro del coche
     m_body->body->ApplyLinearImpulse(turboImpulse, m_body->body->GetWorldCenter(), true);
+
+    // Permitir velocidad máxima temporalmente mayor si se activa el turbo
+    b2Vec2 velocity = m_body->body->GetLinearVelocity();
+    float speed = velocity.Length();
+    if (speed > maxTurboSpeed)
+    {
+        velocity.Normalize();
+        velocity *= maxTurboSpeed;
+        m_body->body->SetLinearVelocity(velocity);
+    }
 }
 Circle::~Circle()
 {

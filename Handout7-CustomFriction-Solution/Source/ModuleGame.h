@@ -44,7 +44,6 @@ public:
     Car(PhysBody* i_body, float i_mass, int i_player);
     void ApplyTurbo();
     ~Car();
-
     float GetLifeTime() const;
     int GetPlayer();
     void Draw(Texture2D texture);
@@ -103,12 +102,19 @@ public:
     bool showCredits = false;
     bool isEnterPressed = false;
 
-    //Variables de Turbo
-    float turboRechargeTimer = 0.0f;
-    float turboRechargeDuration = 5.0f; //Tiempo para recargar Turbo
-    float turboUsedTime = 0.0f;
-    float turboDuration = 1.5f;         //Tiempo de Turbo
-    bool turboActive = false;
+// Turbo para car1
+    bool car1TurboActive = false;
+    float car1TurboUsedTime = 0.0f;
+    float car1TurboRechargeTimer = 0.0f;
+
+    // Turbo para car2
+    bool car2TurboActive = false;
+    float car2TurboUsedTime = 0.0f;
+    float car2TurboRechargeTimer = 0.0f;
+
+    // Constantes compartidas
+    const float turboDuration = 2.0f; // Duración del turbo en segundos
+    const float turboRechargeDuration = 5.0f; // Tiempo de recarga en segundos
 
     bool gameFinished = false;
     float totalTime = 0.0f;
