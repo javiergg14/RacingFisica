@@ -427,8 +427,8 @@ void Car::Draw(Texture2D texture)
     float angle = m_body->body->GetAngle() * RAD2DEG; // Ángulo en grados
 
     // Dimensiones del coche (más pequeñas, en metros)
-    float width = 15.0f;  // Ancho del coche en metros
-    float height = 25.0f; // Alto del coche en metro
+    float width = 23.0f;  // Ancho del coche en metros
+    float height = 43.0f; // Alto del coche en metro
 
     // Convierte la posición del coche de metros a píxeles
     float posX = METERS_TO_PIXELS(pos.x);
