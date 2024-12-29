@@ -45,7 +45,6 @@ bool ModuleGame::Start()
     // Configuración de checkpoints
     lapCount = 0;
     currentCheckpointIndex = 0;
-    CreateCheckpoints();
     for (PhysBody* checkpoint : checkpoints)
     {
         checkpoint->listener = this;
@@ -159,6 +158,7 @@ bool ModuleGame::MainMenu()
         else if (IsKeyPressed(KEY_ENTER) && !isEnterPressed) {
             isMapSelectorActive = false;
             CreateColliders();
+            CreateCheckpoints();
             // Aquí inicias el juego con el mapa seleccionado
         }
     }
@@ -168,7 +168,6 @@ bool ModuleGame::MainMenu()
         isEnterPressed = false;
     }
 }
-
 // OnCollision para manejar colisiones
 void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 {
@@ -220,7 +219,6 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
         }
     }
 }
-
 update_status ModuleGame::Update()
 {
     if (showCredits || isMenuActive || isMapSelectorActive)
@@ -228,23 +226,20 @@ update_status ModuleGame::Update()
         MainMenu();
         return UPDATE_CONTINUE;
     }
-
     // Dibujar fondo y texto básico
     DrawTexture(mapTextures[selectedMapIndex], 0, 0, WHITE);
     DrawText(TextFormat("Laps: %d", lapCount), 20, 20, 30, WHITE);
-
     // Win text si el juego ha terminado
     if (gameFinished) {
         DrawText("YOU WIN", 250, 300, 50, GREEN);
         DrawText(TextFormat("Time: %.2f seconds", totalTime), 250, 400, 30, WHITE);
         return UPDATE_CONTINUE;
     }
-
     // Turbo para car1
-    if (IsKeyPressed(KEY_LEFT_SHIFT) && car1TurboRechargeTimer >= turboDuration) {
+    if (IsKeyPressed(KEY_LEFT_SHIFT) && car1TurboUsedTime < turboDuration) {
         car1TurboActive = true;
-        car1TurboRechargeTimer = 0.0f;
     }
+    // Manejo de tiempo de uso y desactivación
     if (car1TurboActive) {
         car1TurboUsedTime += GetFrameTime();
         if (car1TurboUsedTime >= turboDuration) {
@@ -267,11 +262,9 @@ update_status ModuleGame::Update()
             }
         }
     }
-
     // Turbo para car2
-    if (IsKeyPressed(KEY_RIGHT_SHIFT) && car2TurboRechargeTimer >= turboDuration) {
+    if (IsKeyPressed(KEY_RIGHT_SHIFT) && car2TurboUsedTime < turboDuration) {
         car2TurboActive = true;
-        car2TurboRechargeTimer = 0.0f;
     }
     if (car2TurboActive) {
         car2TurboUsedTime += GetFrameTime();
@@ -295,7 +288,6 @@ update_status ModuleGame::Update()
             }
         }
     }
-
     // Dibujar coches y aplicar turbo
     for (Car& c : m_tdTire)
     {
@@ -311,7 +303,6 @@ update_status ModuleGame::Update()
             c.Draw(car2Texture);
         }
     }
-
     // Indicadores de turbo para car1
     float car1UsedPercentage = car1TurboUsedTime / turboDuration;
     DrawRectangle(50, 800, 20, 150, LIGHTGRAY);
@@ -324,7 +315,6 @@ update_status ModuleGame::Update()
 
     return UPDATE_CONTINUE;
 }
-
 Collider::Collider(PhysBody* i_body)
     : m_body(i_body)
 {
@@ -369,30 +359,25 @@ Car::Car(PhysBody* i_body, float i_mass, int i_player)
 {
     m_lifeTime.Start();
 }
-void Car::ApplyTurbo()
-{
+void Car::ApplyTurbo() {
     float turboForce = 2000.0f; // Fuerza adicional del turbo
-    float maxTurboSpeed = 20.0f; // Velocidad máxima adicional permitida durante el turbo
+    float turboMaxSpeed = 10.0f; // Velocidad máxima durante el turbo (más alta que la velocidad normal)
 
     // Obtener el vector de dirección "adelante" del coche en el mundo
     b2Vec2 forwardDirection = m_body->body->GetWorldVector(b2Vec2(0.0f, -1.0f));
-
-    // Normalizar el vector para evitar problemas con magnitud
     forwardDirection.Normalize();
 
     // Calcular el impulso basado en la fuerza del turbo
     b2Vec2 turboImpulse = turboForce * forwardDirection;
-
-    // Aplicar el impulso al centro del coche
     m_body->body->ApplyLinearImpulse(turboImpulse, m_body->body->GetWorldCenter(), true);
 
-    // Permitir velocidad máxima temporalmente mayor si se activa el turbo
+    // Obtener la velocidad actual del coche
     b2Vec2 velocity = m_body->body->GetLinearVelocity();
-    float speed = velocity.Length();
-    if (speed > maxTurboSpeed)
-    {
+
+    // Permitir temporalmente una velocidad máxima mayor mientras el turbo está activo
+    if (velocity.Length() > turboMaxSpeed) {
         velocity.Normalize();
-        velocity *= maxTurboSpeed;
+        velocity *= turboMaxSpeed;
         m_body->body->SetLinearVelocity(velocity);
     }
 }
@@ -589,11 +574,14 @@ void Car::Update(float staticFriction, float dynamicFriction)
 
     // Aplicar fuerzas al cuerpo (fuerza del usuario + fricción dinámica)
     m_body->body->ApplyForce(force + friction, m_body->body->GetWorldCenter(), true);
-
     // **4. Limitar velocidad máxima**
-    if (velocity.Length() > maxSpeed) {
+ 
+    float maxAllowedSpeed = car1TurboActive && player == 1 ? 3.5f : 2.0f;
+        car2TurboActive && player == 2 ? 3.5f : 2.0f; // Velocidad máxima normal o con turbo
+
+    if (velocity.Length() > maxAllowedSpeed) {
         velocity.Normalize();
-        velocity *= maxSpeed;
+        velocity *= maxAllowedSpeed;
         m_body->body->SetLinearVelocity(velocity);
     }
 
@@ -605,48 +593,31 @@ void Car::Update(float staticFriction, float dynamicFriction)
 void ModuleGame::CreateCheckpoints()
 {
     // Checkpoint 1: Inicio/Fin
-    checkpoints.push_back(App->physics->CreateRectangleSensor(928, 652, 75, 10));  // Checkpoint 1: Inicio/Fin 
+    if (selectedMapIndex == 0)
+    {
+        checkpoints.push_back(App->physics->CreateRectangleSensor(928, 652, 75, 10));  // Checkpoint 1: Inicio/Fin 
+        // Otros checkpoints
+        checkpoints.push_back(App->physics->CreateRectangleSensor(928, 550, 75, 10));  // Checkpoint 2: Carretera derecha
+        checkpoints.push_back(App->physics->CreateRectangleSensor(928, 400, 75, 10));  // Checkpoint 3: Carretera derecha
+        checkpoints.push_back(App->physics->CreateRectangleSensor(928, 250, 75, 10));  // Checkpoint 4: Carretera derecha
+        checkpoints.push_back(App->physics->CreateRectangleSensor(928, 100, 75, 10));  // Checkpoint 5: Carretera derecha
 
-    // Otros checkpoints
-    checkpoints.push_back(App->physics->CreateRectangleSensor(928, 550, 75, 10));  // Checkpoint 2: Carretera derecha
-    checkpoints.push_back(App->physics->CreateRectangleSensor(928, 400, 75, 10));  // Checkpoint 3: Carretera derecha
-    checkpoints.push_back(App->physics->CreateRectangleSensor(928, 250, 75, 10));  // Checkpoint 4: Carretera derecha
-    checkpoints.push_back(App->physics->CreateRectangleSensor(928, 100, 75, 10));  // Checkpoint 5: Carretera derecha
+        checkpoints.push_back(App->physics->CreateRectangleSensor(850, 57, 10, 65));  // Checkpoint 6: Carretera de Arriba
+        checkpoints.push_back(App->physics->CreateRectangleSensor(700, 57, 10, 65));  // Checkpoint 7: Carretera de Arriba
+        checkpoints.push_back(App->physics->CreateRectangleSensor(550, 57, 10, 65));  // Checkpoint 8: Carretera de Arriba
+        checkpoints.push_back(App->physics->CreateRectangleSensor(400, 57, 10, 65));  // Checkpoint 9: Carretera de Arriba
+        checkpoints.push_back(App->physics->CreateRectangleSensor(250, 57, 10, 65));  // Checkpoint 10: Carretera de Arriba
 
-    checkpoints.push_back(App->physics->CreateRectangleSensor(850, 57, 10, 65));  // Checkpoint 6: Carretera de Arriba
-    checkpoints.push_back(App->physics->CreateRectangleSensor(700, 57, 10, 65));  // Checkpoint 7: Carretera de Arriba
-    checkpoints.push_back(App->physics->CreateRectangleSensor(550, 57, 10, 65));  // Checkpoint 8: Carretera de Arriba
-    checkpoints.push_back(App->physics->CreateRectangleSensor(400, 57, 10, 65));  // Checkpoint 9: Carretera de Arriba
-    checkpoints.push_back(App->physics->CreateRectangleSensor(250, 57, 10, 65));  // Checkpoint 10: Carretera de Arriba
+        checkpoints.push_back(checkpoints[0]); // Checkpoint final es el mismo que el inicio
+    }
+    if (selectedMapIndex == 1) {
 
-    checkpoints.push_back(App->physics->CreateRectangleSensor(180, 150, 100, 10));  // Checkpoint 11: Carretera izquierda 
-    checkpoints.push_back(App->physics->CreateRectangleSensor(180, 300, 100, 10));  // Checkpoint 12: Carretera izquierda
-    checkpoints.push_back(App->physics->CreateRectangleSensor(180, 400, 100, 10));  // Checkpoint 13: Carretera izquierda
-    checkpoints.push_back(App->physics->CreateRectangleSensor(180, 550, 100, 10));  // Checkpoint 14: Carretera izquierda
-    checkpoints.push_back(App->physics->CreateRectangleSensor(180, 650, 100, 10));  // Checkpoint 15: Carretera izquierda
-    checkpoints.push_back(App->physics->CreateRectangleSensor(180, 800, 175, 10));  // Checkpoint 16: Carretera izquierda
+    }
+    if (selectedMapIndex == 2)
+    {
 
-    checkpoints.push_back(App->physics->CreateRectangleSensor(275, 907, 10, 125));  // Checkpoint 17: Carretera izquierda Curva Abajo
-    checkpoints.push_back(App->physics->CreateRectangleSensor(425, 907, 10, 125));  // Checkpoint 18: Carretera izquierda Curva Abajo
-
-    checkpoints.push_back(App->physics->CreateRectangleSensor(465, 755, 75, 10));  // Checkpoint 19: Saltos Carril Izquierdo
-    checkpoints.push_back(App->physics->CreateRectangleSensor(465, 628, 75, 10));  // Checkpoint 20: Saltos Carril Izquierdo
-    checkpoints.push_back(App->physics->CreateRectangleSensor(465, 500, 75, 10));  // Checkpoint 21: Saltos Carril izquierdo
-    checkpoints.push_back(App->physics->CreateRectangleSensor(465, 400, 75, 10));  // Checkpoint 22: Saltos Carril Izquierdo
-
-    checkpoints.push_back(App->physics->CreateRectangleSensor(570, 285, 10, 140));  // Checkpoint 23: Curva Mid-Saltos
-
-    checkpoints.push_back(App->physics->CreateRectangleSensor(685, 400, 75, 10));  // Checkpoint 24: Saltos Carril Derecho
-    checkpoints.push_back(App->physics->CreateRectangleSensor(685, 508, 75, 10));  // Checkpoint 25: Saltos Carril Derecho
-    checkpoints.push_back(App->physics->CreateRectangleSensor(685, 635, 75, 10));  // Checkpoint 26: Saltos Carril Derecho
-    checkpoints.push_back(App->physics->CreateRectangleSensor(685, 765, 75, 10));  // Checkpoint 27: Saltos Carril Derecho
-
-    checkpoints.push_back(App->physics->CreateRectangleSensor(735, 945, 10, 95));  // Checkpoint 28: Ultima Curva
-    checkpoints.push_back(App->physics->CreateRectangleSensor(880, 945, 10, 95));  // Checkpoint 29: Ultima curva
-
-    checkpoints.push_back(App->physics->CreateRectangleSensor(928, 800, 75, 10));  // Checkpoint 30: Carretera derecha
-
-    checkpoints.push_back(checkpoints[0]); // Checkpoint final es el mismo que el inicio
+    }
+  
 }
 
 void ModuleGame::CreateColliders()

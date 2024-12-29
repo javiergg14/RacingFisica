@@ -11,7 +11,7 @@
 class PhysBody;
 class PhysicEntity;
 class b2World;
-
+class ModuleGame;
 // Enums
 enum {
     TDC_LEFT = 0x1,
@@ -26,7 +26,6 @@ class Circle
 public:
     Circle(PhysBody* i_body, float i_mass);
     ~Circle();
-
     float GetLifeTime() const;
     void Draw();
     void Update(float i_staticFriction, float i_dynamicFriction);
@@ -36,7 +35,6 @@ private:
     Timer m_lifeTime;
     float mass;
 };
-
 // Car class
 class Car
 {
@@ -49,8 +47,9 @@ public:
     void Draw(Texture2D texture);
     void Update(float i_staticFriction, float i_dynamicFriction);
     PhysBody* GetBody();
-
+    Module* module = nullptr;
 private:
+
     PhysBody* m_body = nullptr;
     Timer m_lifeTime;
     float mass;
@@ -83,7 +82,6 @@ class ModuleGame : public Module
 public:
     ModuleGame(Application* app, bool start_enabled = true);
     ~ModuleGame();
-
     bool Start();
     update_status Update();
     void CreateCheckpoints();
@@ -114,7 +112,7 @@ public:
 
     // Constantes compartidas
     const float turboDuration = 2.0f; // Duración del turbo en segundos
-    const float turboRechargeDuration = 5.0f; // Tiempo de recarga en segundos
+    const float turboRechargeDuration = 7.0f; // Tiempo de recarga en segundos
 
     bool gameFinished = false;
     float totalTime = 0.0f;
