@@ -193,8 +193,11 @@ bool ModuleGame::MainMenu()
 
             car1LapCount = 1;
             car2LapCount = 1;
+            car1TurboUsedTime = 0.0f;
+            car2TurboUsedTime = 0.0f;
             car1CurrentCheckpointIndex = 0;
             car2CurrentCheckpointIndex = 0;
+            totalTime = 0.0f;
             CreateColliders();
             CreateCheckpoints();
 
@@ -295,7 +298,7 @@ update_status ModuleGame::Update() {
     }
     else {
         DrawText(TextFormat("Lap: %d", car1LapCount), 20, 20, 30, WHITE);
-        DrawText(TextFormat("Lap: %d", car2LapCount), 1200, 20, 30, WHITE);
+        DrawText(TextFormat("Lap: %d", car2LapCount), 1250, 20, 30, WHITE);
     }
 
     if (IsKeyPressed(KEY_LEFT_SHIFT) && car1TurboUsedTime < turboDuration) car1TurboActive = true;
@@ -325,8 +328,8 @@ update_status ModuleGame::Update() {
     DrawRectangle(50, 800 + 150 * car1UsedPercentage, 20, 150 * (1.0f - car1UsedPercentage), BLUE);
 
     float car2UsedPercentage = car2TurboUsedTime / turboDuration;
-    DrawRectangle(100, 800, 20, 150, LIGHTGRAY);
-    DrawRectangle(100, 800 + 150 * car2UsedPercentage, 20, 150 * (1.0f - car2UsedPercentage), RED);
+    DrawRectangle(1300, 800, 20, 150, LIGHTGRAY);
+    DrawRectangle(1300, 800 + 150 * car2UsedPercentage, 20, 150 * (1.0f - car2UsedPercentage), RED);
 
     if (countdownActive) {
         countdownTimer += GetFrameTime();

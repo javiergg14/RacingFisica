@@ -113,7 +113,6 @@ public:
     bool countdownActive = false;
     bool playersCanMove = false;
     bool countdownSoundPlayed = false;
-
     float countdownTimer = 0.0f;
     int countdownValue = 3;
 // Turbo para car1
@@ -127,7 +126,7 @@ public:
     float car2TurboRechargeTimer = 0.0f;
 
     // Constantes compartidas
-    const float turboDuration = 2.0f; 
+    const float turboDuration = 1.8f; 
     const float turboRechargeDuration = 7.0f; 
 
     bool gameFinished = false;
