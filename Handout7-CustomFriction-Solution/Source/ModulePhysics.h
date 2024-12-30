@@ -50,7 +50,7 @@ public:
     bool CleanUp();
 
     PhysBody* CreateCircle(int x, int y, int radius);
-    PhysBody* CreateRectangle(int x, int y, int width, int height, b2BodyType Type);
+    PhysBody* CreateRectangle(int x, int y, int width, int height, float angle, b2BodyType Type);
     PhysBody* CreateChain(int x, int y, const int* points, int size);
 
     void BeginContact(b2Contact* contact);

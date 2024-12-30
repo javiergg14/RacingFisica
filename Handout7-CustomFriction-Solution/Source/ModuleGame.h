@@ -89,6 +89,7 @@ public:
     void CreateCheckpoints();
     void CreateColliders();
     void RemoveMapColliders();
+    void SetInitPosCar(Car c);
     bool CleanUp();
     bool MainMenu();
     void OnCollision(PhysBody* bodyA, PhysBody* bodyB);

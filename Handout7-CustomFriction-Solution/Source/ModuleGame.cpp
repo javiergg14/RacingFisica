@@ -36,8 +36,8 @@ bool ModuleGame::Start()
     // Crear el coche en el centro de la pantalla
     mass = 100.0f; // Masa del coche
 
-    car1 = new Car(App->physics->CreateRectangle(500, 500, 15, 25, b2_dynamicBody), mass, 1,this);
-    car2 = new Car(App->physics->CreateRectangle(500, 500, 15, 25, b2_dynamicBody), mass, 2,this);
+    car1 = new Car(App->physics->CreateRectangle(0, 0, 15, 25, 0, b2_dynamicBody), mass, 1, this);
+    car2 = new Car(App->physics->CreateRectangle(0, 0, 15, 25, 0, b2_dynamicBody), mass, 2, this);
 
     car1->GetBody()->listener = this;
     car2->GetBody()->listener = this;
@@ -200,6 +200,9 @@ bool ModuleGame::MainMenu()
             totalTime = 0.0f;
             CreateColliders();
             CreateCheckpoints();
+            for (Car& c : m_tdTire) {
+                SetInitPosCar(c);
+            }
 
             // Inicializar contador
             countdownActive = true;
@@ -292,6 +295,10 @@ update_status ModuleGame::Update() {
         if (IsKeyPressed(KEY_ENTER)) {
             RemoveMapColliders();
             gameFinished = false;
+            for (Car& c : m_tdTire) {
+                c.GetBody()->body->SetLinearVelocity({ 0, 0 });
+                c.GetBody()->body->SetAngularVelocity({ 0 });
+            }
             isMenuActive = true;
         }
         return UPDATE_CONTINUE;
@@ -429,6 +436,7 @@ float Car::GetLifeTime() const
 {
     return m_lifeTime.ReadSec();
 }
+
 int Car::GetPlayer()
 {
     return player;
@@ -762,6 +770,41 @@ void ModuleGame::CreateColliders()
 PhysBody* Car::GetBody()
 {
     return m_body;
+}
+void ModuleGame::SetInitPosCar(Car c)
+{
+    if (c.GetPlayer() == 1)
+    {
+        if (selectedMapIndex == 0)
+        {
+            c.GetBody()->body->SetTransform({ PIXEL_TO_METERS(650), PIXEL_TO_METERS(80) }, 270.0f * DEG2RAD);
+        }
+        else if (selectedMapIndex == 1)
+        {
+            c.GetBody()->body->SetTransform({ PIXEL_TO_METERS(650), PIXEL_TO_METERS(80) }, 270.0f * DEG2RAD);
+        }
+        else if (selectedMapIndex == 2)
+        {
+            c.GetBody()->body->SetTransform({ PIXEL_TO_METERS(330), PIXEL_TO_METERS(80) }, 90.0f * DEG2RAD);
+        }
+    }
+    if (c.GetPlayer() == 2)
+    {
+        if (selectedMapIndex == 0)
+        {
+            c.GetBody()->body->SetTransform({ PIXEL_TO_METERS(650), PIXEL_TO_METERS(150) }, 270.0f * DEG2RAD);
+        }
+        else if (selectedMapIndex == 1)
+        {
+            c.GetBody()->body->SetTransform({ PIXEL_TO_METERS(650), PIXEL_TO_METERS(150) }, 270.0f * DEG2RAD);
+        }
+        else if (selectedMapIndex == 2)
+        {
+            c.GetBody()->body->SetTransform({ PIXEL_TO_METERS(330), PIXEL_TO_METERS(150) }, 90.0f * DEG2RAD);
+        }
+    }
+    
+
 }
 void ModuleGame::RemoveMapColliders()
 {
