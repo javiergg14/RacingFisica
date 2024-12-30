@@ -39,7 +39,6 @@ private:
 class Car
 {
 public:
-    // Modificación en el constructor para incluir una referencia o puntero a ModuleGame
     Car(PhysBody* i_body, float i_mass, int i_player, ModuleGame* moduleGame);
 
     void ApplyTurbo();
@@ -77,7 +76,6 @@ public:
     PhysBody* GetBody() const { return m_body; }
     void Draw();
     PhysBody* m_body = nullptr;
-
 };
 
 
@@ -123,13 +121,13 @@ public:
     float car2TurboRechargeTimer = 0.0f;
 
     // Constantes compartidas
-    const float turboDuration = 2.0f; // Duración del turbo en segundos
-    const float turboRechargeDuration = 7.0f; // Tiempo de recarga en segundos
+    const float turboDuration = 2.0f; 
+    const float turboRechargeDuration = 7.0f; 
 
     bool gameFinished = false;
     float totalTime = 0.0f;
-    int car1LapCount = 0;
-    int car2LapCount = 0;
+    int car1LapCount = 1;
+    int car2LapCount = 1;
     int winner = 0;
     int car1CurrentCheckpointIndex = 0;
     int car2CurrentCheckpointIndex = 0;

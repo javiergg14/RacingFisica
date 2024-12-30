@@ -191,8 +191,8 @@ bool ModuleGame::MainMenu()
         {
             PlaySound(Selection);
             isMapSelectorActive = false;
-            car1LapCount = 0;
-            car2LapCount = 0;
+            car1LapCount = 1;
+            car2LapCount = 1;
             car1CurrentCheckpointIndex = 0;
             car2CurrentCheckpointIndex = 0;
             CreateColliders();
@@ -250,7 +250,7 @@ void ModuleGame::CountLapsAndManageCheckpoints(int& lapCount, int& currentCheckp
         }
 
         // Verificar si el coche ha terminado la carrera
-        if (lapCount == 3) // 3 vueltas para terminar la carrera
+        if (lapCount == 4) // 3 vueltas para terminar la carrera
         {
             gameFinished = true;
             winner = carNumber; // Establece el ganador
@@ -271,8 +271,8 @@ update_status ModuleGame::Update()
     DrawTexture(mapTextures[selectedMapIndex], 0, 0, WHITE); //Dibujar mapa
 
     if (!gameFinished) { // Textos lapcount
-        DrawText(TextFormat("Laps: %d", car1LapCount), 20, 20, 30, WHITE);
-        DrawText(TextFormat("Laps: %d", car2LapCount), 1200, 20, 30, WHITE);
+        DrawText(TextFormat("Lap: %d", car1LapCount), 20, 20, 30, WHITE);
+        DrawText(TextFormat("Lap: %d", car2LapCount), 1200, 20, 30, WHITE);
 
       }
     // Win text si el juego ha terminado
@@ -282,6 +282,7 @@ update_status ModuleGame::Update()
         DrawText("Press ENTER to continue", 450, 950, 30, WHITE);
         if (IsKeyPressed(KEY_ENTER))
         {
+            RemoveMapColliders();
             gameFinished = false;
             isMenuActive = true;
         }
@@ -636,25 +637,33 @@ void ModuleGame::CreateCheckpoints()
         checkpoints.push_back(App->physics->CreateRectangleSensor(690, 115, 5, 200));
     }
     if (selectedMapIndex == 1) {
-        checkpoints.push_back(App->physics->CreateRectangleSensor(610, 115, 5, 200));
-        checkpoints.push_back(App->physics->CreateRectangleSensor(125, 400, 203, 5));
-        checkpoints.push_back(App->physics->CreateRectangleSensor(548, 652, 200, 5));
-        checkpoints.push_back(App->physics->CreateRectangleSensor(832, 652, 205, 5));
-        checkpoints.push_back(App->physics->CreateRectangleSensor(1250, 400, 203, 5));
-        checkpoints.push_back(App->physics->CreateRectangleSensor(690, 115, 5, 200));
+        checkpoints.push_back(App->physics->CreateRectangleSensor(610, 115, 5, 200)); // Meta Primero
+        checkpoints.push_back(App->physics->CreateRectangleSensor(125, 400, 203, 5)); // Segundo
+        checkpoints.push_back(App->physics->CreateRectangleSensor(610, 915, 5, 200)); // Tercero
+        checkpoints.push_back(App->physics->CreateRectangleSensor(1235, 755, 200, 5));// Cuarto
+        checkpoints.push_back(App->physics->CreateRectangleSensor(610, 537, 5, 200)); // Quinto
+        checkpoints.push_back(App->physics->CreateRectangleSensor(350, 430, 200, 5)); //Sexta
+        checkpoints.push_back(App->physics->CreateRectangleSensor(610, 330, 5, 200)); //Septima
+        checkpoints.push_back(App->physics->CreateRectangleSensor(1250, 220, 200, 5));// Octava
+        checkpoints.push_back(App->physics->CreateRectangleSensor(690, 115, 5, 200)); // Meta Ultima
     }
     if (selectedMapIndex == 2) {
-        checkpoints.push_back(App->physics->CreateRectangleSensor(610, 115, 5, 200));
-        checkpoints.push_back(App->physics->CreateRectangleSensor(125, 400, 203, 5));
-        checkpoints.push_back(App->physics->CreateRectangleSensor(548, 652, 200, 5));
-        checkpoints.push_back(App->physics->CreateRectangleSensor(832, 652, 205, 5));
-        checkpoints.push_back(App->physics->CreateRectangleSensor(1250, 400, 203, 5));
-        checkpoints.push_back(App->physics->CreateRectangleSensor(690, 115, 5, 200));
+        checkpoints.push_back(App->physics->CreateRectangleSensor(370, 115, 5, 200)); // Meta Primera
+        checkpoints.push_back(App->physics->CreateRectangleSensor(580, 350, 200, 5)); // Segunda
+        checkpoints.push_back(App->physics->CreateRectangleSensor(790, 650, 200, 5)); // Tercera
+        checkpoints.push_back(App->physics->CreateRectangleSensor(1020, 915, 5, 200)); // Cuarto
+        checkpoints.push_back(App->physics->CreateRectangleSensor(1020, 915, 5, 200)); // Quinto
+        checkpoints.push_back(App->physics->CreateRectangleSensor(1250, 525, 200, 5)); // Sexto
+        checkpoints.push_back(App->physics->CreateRectangleSensor(1020, 115, 5, 200)); // Septimo
+        checkpoints.push_back(App->physics->CreateRectangleSensor(790, 350, 200, 5)); // Octavo
+        checkpoints.push_back(App->physics->CreateRectangleSensor(580, 650, 200, 5)); // Novena
+        checkpoints.push_back(App->physics->CreateRectangleSensor(330, 915, 5, 200)); // Meta Primera
+        checkpoints.push_back(App->physics->CreateRectangleSensor(125, 525, 203, 5)); // Septimo
+        checkpoints.push_back(App->physics->CreateRectangleSensor(290, 115, 5, 200)); // Meta Ultima
     }
 }
 void ModuleGame::CreateColliders()
 {
-    RemoveMapColliders();
     const int chain1Points[] = {
     487, 1010,
     515, 1006,
@@ -773,26 +782,22 @@ PhysBody* Car::GetBody()
 }
 void ModuleGame::RemoveMapColliders()
 {
-    // Iterar sobre los colliders y eliminar los que no son coches
+    // Iterar sobre los colliders
     for (auto it = m_colliders.begin(); it != m_colliders.end();)
     {
         Collider& collider = *it; // Obtener el collider actual
-
         // Comprobar si el collider es un coche
         if (collider.GetBody() != car1->GetBody() && collider.GetBody() != car2->GetBody())
         {
-            // Eliminar el collider del mundo físico
-            App->physics->world->DestroyBody(collider.GetBody()->body); // Asegúrate de que tienes acceso al cuerpo
+            App->physics->world->DestroyBody(collider.GetBody()->body); 
             it = m_colliders.erase(it); // Eliminar del vector
         }
         else
         {
-            ++it; // Solo avanzar si no se eliminó
+            ++it; //avanzar si no se eliminó
         }
     }
-
-    // También eliminar los checkpoints si es necesario
-    for (auto& checkpoint : checkpoints)
+    for (auto& checkpoint : checkpoints)//eliminar checkpoints
     {
         App->physics->world->DestroyBody(checkpoint->body);
     }
