@@ -218,7 +218,7 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
     {
         if (bodyA == checkpoints[i] || bodyB == checkpoints[i])
         {
-            // Identificar qué coche alcanzó el checkpoint
+            // Saber qué coche tocó el checkpoint
             if (bodyA == car1->GetBody() || bodyB == car1->GetBody())
             {
                 // Gestionar el checkpoint para el coche 1
@@ -237,25 +237,21 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
                     CountLapsAndManageCheckpoints(car2LapCount, car2CurrentCheckpointIndex, 2);
                 }
             }
-            break; // Salir del bucle, ya que encontramos el checkpoint relevante
+            break;
         }
     }
 }
 void ModuleGame::CountLapsAndManageCheckpoints(int& lapCount, int& currentCheckpointIndex, int carNumber)
 {
-    // Verificar si el coche alcanzó el checkpoint correcto
     if (currentCheckpointIndex >= checkpoints.size()) {
-        currentCheckpointIndex = 0; // Reiniciar al primer checkpoint
-        lapCount++; // Incrementar las vueltas
+        currentCheckpointIndex = 0; 
+        lapCount++;
         LOG("¡Coche %d completó una vuelta! Total de vueltas: %d", carNumber, lapCount);
-
         // Reactivar todos los checkpoints para la siguiente vuelta
         for (auto& checkpoint : checkpoints) {
-            checkpoint->isActive = true; // Reactivar todos los checkpoints
+            checkpoint->isActive = true;
         }
-
-        // Verificar si el coche ha terminado la carrera
-        if (lapCount == 4) // 3 vueltas para terminar la carrera
+        if (lapCount == 4) 
         {
             gameFinished = true;
             winner = carNumber; // Establece el ganador
@@ -264,7 +260,6 @@ void ModuleGame::CountLapsAndManageCheckpoints(int& lapCount, int& currentCheckp
         }
     }
     else {
-        // Si alcanzó un checkpoint válido, desactivar el checkpoint actual
         checkpoints[currentCheckpointIndex - 1]->isActive = false; // Desactivar el checkpoint actual
     }
 }
@@ -273,7 +268,6 @@ update_status ModuleGame::Update() {
         MainMenu();
         return UPDATE_CONTINUE;
     }
-
     DrawTexture(mapTextures[selectedMapIndex], 0, 0, WHITE);
 
     for (Car& c : m_tdTire) {
@@ -358,16 +352,12 @@ update_status ModuleGame::Update() {
 
     return UPDATE_CONTINUE;
 }
-
 Collider::Collider(PhysBody* i_body)
     : m_body(i_body)
 {
 }
-
 Collider::~Collider()
-{
-}
-
+{ }
 void Collider::Draw()
 {
     if (m_body)
@@ -389,8 +379,6 @@ void Collider::Draw()
         }
     }
 }
-
-
 Circle::Circle(PhysBody* i_body, float i_mass)
 	: m_body(i_body)
 	, mass(i_mass)
