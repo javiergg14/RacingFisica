@@ -297,7 +297,7 @@ update_status ModuleGame::Update()
         }
     }
     // Turbo para car2
-    if (IsKeyPressed(KEY_RIGHT_SHIFT) && car2TurboUsedTime < turboDuration) {
+    if (IsKeyPressed(KEY_SPACE) && car2TurboUsedTime < turboDuration) {
         car2TurboActive = true;
     }
     if (car2TurboActive) {
@@ -306,7 +306,7 @@ update_status ModuleGame::Update()
             car2TurboActive = false;
             car2TurboUsedTime = turboDuration;
         }
-        if (IsKeyReleased(KEY_RIGHT_SHIFT)) {
+        if (IsKeyReleased(KEY_SPACE)) {
             car2TurboActive = false;
         }
     }
