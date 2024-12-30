@@ -108,7 +108,7 @@ public:
     int selectedMapIndex = 0;
     bool showCredits = false;
     bool isEnterPressed = false;
-
+    bool showControls = false;
 // Turbo para car1
     bool car1TurboActive = false;
     float car1TurboUsedTime = 0.0f;
@@ -153,8 +153,7 @@ public:
     Texture2D creditsTexture;
     Texture2D car1Texture;
     Texture2D car2Texture;
-
-    
+    Texture2D controlsTexture;
     float mass;
 
     Car* car1;

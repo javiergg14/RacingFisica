@@ -26,6 +26,7 @@ bool ModuleGame::Start()
     mapSelectorTextures[0] = LoadTexture("Assets/map1selector.png");
     mapSelectorTextures[1] = LoadTexture("Assets/map2selector.png");
     mapSelectorTextures[2] = LoadTexture("Assets/map3selector.png");
+    controlsTexture = LoadTexture("Assets/Controls.png");
     Selection = LoadSound("Assets/Sounds/SelectionMade.wav");
     SwitchOption = LoadSound("Assets/Sounds/SwitchOption.wav");
 
@@ -76,14 +77,15 @@ bool ModuleGame::MainMenu()
 {
     if (isMenuActive)
     {
+        // Dibuja el menú principal
         DrawTexture(MenuTexture, 0, 0, WHITE);
-        const char* menuOptions[] = { "Start", "Credits", "Exit" };
-        const int totalOptions = 3;
+        const char* menuOptions[] = { "Start", "Credits", "Controls", "Exit" }; // Añadir "Controls"
+        const int totalOptions = 4; // Actualizar el total de opciones
         for (int i = 0; i < totalOptions; ++i)
         {
             Color color = (i == selectedMenuOption) ? YELLOW : WHITE;
             int fontSize = (i == selectedMenuOption) ? 90 : 80;
-            DrawText(menuOptions[i], 50, 700 + i * 100, fontSize, color);
+            DrawText(menuOptions[i], 50, 600 + i * 100, fontSize, color);
         }
 
         // Manejo de entrada del menú
@@ -97,10 +99,10 @@ bool ModuleGame::MainMenu()
             PlaySound(SwitchOption);
             selectedMenuOption = (selectedMenuOption - 1 + totalOptions) % totalOptions;
         }
-        else if (IsKeyPressed(KEY_ENTER) && !isEnterPressed) // Verificar si ENTER no está bloqueado
+        else if (IsKeyPressed(KEY_ENTER) && !isEnterPressed)
         {
             PlaySound(Selection);
-            isEnterPressed = true; // Bloquea la tecla ENTER
+            isEnterPressed = true;
             switch (selectedMenuOption)
             {
             case 0: // Start
@@ -111,22 +113,36 @@ bool ModuleGame::MainMenu()
                 showCredits = true;
                 isMenuActive = false;
                 break;
-            case 2: // Exit
+            case 2: // Controls
+                showControls = true; // Activar la pantalla de controles
+                isMenuActive = false; // Desactivar el menú principal
+                break;
+            case 3: // Exit
                 exit(1);
             }
         }
     }
-    if (showCredits)
+    else if (showCredits)
     {
         DrawTexture(creditsTexture, 0, 0, WHITE);
-        DrawText("Press BACKSPACE to return", 280, 950, 30, WHITE);
+        DrawText("Press BACKSPACE to return", 450, 950, 30, WHITE);
         if (IsKeyPressed(KEY_BACKSPACE))
         {
             isMenuActive = true;
-            showCredits = false;
+            showCredits = false; // Regresar al menú
         }
     }
-    if (isMapSelectorActive)
+    else if (showControls) // Mostrar los controles
+    {
+        DrawTexture(controlsTexture, 0, 0, WHITE); // Dibuja la textura de controles
+        DrawText("Press BACKSPACE to return", 450, 950, 30, WHITE); // Instrucciones para regresar
+        if (IsKeyPressed(KEY_BACKSPACE)) // Regresar al menú principal
+        {
+            isMenuActive = true;
+            showControls = false; // Desactivar la pantalla de controles
+        }
+    }
+    else if (isMapSelectorActive)
     {
         if (IsKeyPressed(KEY_BACKSPACE))
         {
@@ -152,6 +168,16 @@ bool ModuleGame::MainMenu()
             };
             Vector2 origin = { mapSelectorTextures[i].width / 2.0f, mapSelectorTextures[i].height / 2.0f };
             DrawTexturePro(mapSelectorTextures[i], source, dest, origin, 0.0f, WHITE);
+
+            // Mostrar el texto solo si el mapa está seleccionado
+            if (i == selectedMapIndex) {
+                const char* mapText = "Map 1: Brewery Hills "; // Valor predeterminado
+                if (i == 1) mapText = "Map 2: Foamy Track";
+                else if (i == 2) mapText = "Map 3: Barrel Road";
+
+                // Ajustar la posición del texto sobre el mapa seleccionado
+                DrawText(mapText, 450, 700, 50, WHITE);
+            }
         }
 
         if (IsKeyPressed(KEY_RIGHT)) {
@@ -162,15 +188,14 @@ bool ModuleGame::MainMenu()
             selectedMapIndex = (selectedMapIndex - 1 + 3) % 3;
             PlaySound(SwitchOption);
         }
-        else if (IsKeyPressed(KEY_ENTER) && !isEnterPressed) {
+        else if (IsKeyPressed(KEY_ENTER))
+        {
             PlaySound(Selection);
             isMapSelectorActive = false;
             CreateColliders();
             CreateCheckpoints();
-            // Aquí inicias el juego con el mapa seleccionado
         }
     }
-
     // Liberar el estado de la tecla ENTER cuando sea soltada
     if (IsKeyReleased(KEY_ENTER)) {
         isEnterPressed = false;
@@ -230,7 +255,7 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 }
 update_status ModuleGame::Update()
 {
-    if (showCredits || isMenuActive || isMapSelectorActive)
+    if (showCredits || isMenuActive || isMapSelectorActive||showControls)
     {
         MainMenu();
         return UPDATE_CONTINUE;
@@ -369,16 +394,18 @@ Car::Car(PhysBody* i_body, float i_mass, int i_player, ModuleGame* moduleGame)
     m_lifeTime.Start();
 }
 void Car::ApplyTurbo() {
-    float turboForce = 200000.0f; // Fuerza adicional del turbo
-    float turboMaxSpeed = 100000.0f; // Velocidad máxima durante el turbo (más alta que la velocidad normal)
+    float turboForce = 500000.0f; // Fuerza adicional del turbo
+    float turboMaxSpeed = 300.0f; // Velocidad máxima durante el turbo (más alta que la velocidad normal)
 
     // Obtener el vector de dirección "adelante" del coche en el mundo
     b2Vec2 forwardDirection = m_body->body->GetWorldVector(b2Vec2(0.0f, -1.0f));
     forwardDirection.Normalize();
 
     // Calcular el impulso basado en la fuerza del turbo
-    b2Vec2 turboImpulse = turboForce * forwardDirection;
-    m_body->body->ApplyLinearImpulse(turboImpulse, m_body->body->GetWorldCenter(), true);
+    if (m_body->body->GetLinearVelocity().Length() < turboMaxSpeed) {
+        b2Vec2 turboImpulse = turboForce * forwardDirection;
+        m_body->body->ApplyLinearImpulse(turboImpulse, m_body->body->GetWorldCenter(), true);
+    }
 
     // Obtener la velocidad actual del coche
     b2Vec2 velocity = m_body->body->GetLinearVelocity();
@@ -583,7 +610,7 @@ void Car::Update(float staticFriction, float dynamicFriction)
 
     // **4. Limitar velocidad máxima**
     float maxAllowedSpeed = (m_moduleGame->car1TurboActive && player == 1) ||
-        (m_moduleGame->car2TurboActive && player == 2) ? 3.5f : 2.0f;
+        (m_moduleGame->car2TurboActive && player == 2) ? 5.5f : 2.0f;
 
     if (velocity.Length() > maxAllowedSpeed) {
         velocity.Normalize();
@@ -595,8 +622,6 @@ void Car::Update(float staticFriction, float dynamicFriction)
     float angularImpulse = angularDamping * m_body->body->GetInertia() * -m_body->body->GetAngularVelocity();
     m_body->body->ApplyAngularImpulse(angularImpulse, true);
 }
-
-
 void ModuleGame::CreateCheckpoints()
 {
     // Checkpoint 1: Inicio/Fin
