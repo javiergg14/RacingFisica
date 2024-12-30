@@ -95,6 +95,8 @@ public:
     bool MainMenu();
     void OnCollision(PhysBody* bodyA, PhysBody* bodyB);
 
+    void CountLapsAndManageCheckpoints(int& lapCount, int& currentCheckpointIndex, int carNumber);
+
 public:
 
     //Sounds
@@ -109,6 +111,7 @@ public:
     bool showCredits = false;
     bool isEnterPressed = false;
     bool showControls = false;
+
 // Turbo para car1
     bool car1TurboActive = false;
     float car1TurboUsedTime = 0.0f;
@@ -125,11 +128,15 @@ public:
 
     bool gameFinished = false;
     float totalTime = 0.0f;
-    int lapCount = 0;
+    int car1LapCount = 0;
+    int car2LapCount = 0;
+    int winner = 0;
+    int car1CurrentCheckpointIndex = 0;
+    int car2CurrentCheckpointIndex = 0;
 
     // Checkpoints y coche
     std::vector<PhysBody*> checkpoints;
-    int currentCheckpointIndex = 0;
+
     PhysBody* car = nullptr;
 
     Timer m_creationTimer;

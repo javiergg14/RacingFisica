@@ -82,6 +82,101 @@ update_status ModulePhysics::PreUpdate()
 
 update_status ModulePhysics::PostUpdate()
 {
+	if (IsKeyPressed(KEY_F1))
+	{
+		debug = !debug;
+	}
+	if (!debug)
+	{
+		return UPDATE_CONTINUE;
+	}
+	// Iterar sobre todos los cuerpos en el mundo
+	for (b2Body* b = world->GetBodyList(); b; b = b->GetNext())
+	{
+		for (b2Fixture* f = b->GetFixtureList(); f; f = f->GetNext())
+		{
+			// Comprobar si la fixture es un sensor
+			if (f->IsSensor())
+			{
+				b2PolygonShape* polygonShape = (b2PolygonShape*)f->GetShape();
+				b2Vec2 prev, v;
+
+				int32 count = polygonShape->m_count;
+				for (int32 i = 0; i < count; ++i)
+				{
+					v = b->GetWorldPoint(polygonShape->m_vertices[i]);
+					if (i > 0)
+						DrawLine(METERS_TO_PIXELS(prev.x), METERS_TO_PIXELS(prev.y), METERS_TO_PIXELS(v.x), METERS_TO_PIXELS(v.y), BLUE);
+
+					prev = v;
+				}
+
+				v = b->GetWorldPoint(polygonShape->m_vertices[0]);
+				DrawLine(METERS_TO_PIXELS(prev.x), METERS_TO_PIXELS(prev.y), METERS_TO_PIXELS(v.x), METERS_TO_PIXELS(v.y), BLUE);
+
+				continue; // Evitar dibujar como otros tipos
+			}
+
+			// Dibujar seg?n el tipo de fixture
+			switch (f->GetType())
+			{
+			case b2Shape::e_circle:
+			{
+				b2CircleShape* shape = (b2CircleShape*)f->GetShape();
+				b2Vec2 pos = f->GetBody()->GetPosition();
+				DrawCircle(METERS_TO_PIXELS(pos.x), METERS_TO_PIXELS(pos.y), (float)METERS_TO_PIXELS(shape->m_radius), Color{ 0, 0, 0, 128 });
+			}
+			break;
+			case b2Shape::e_polygon:
+			{
+				b2PolygonShape* polygonShape = (b2PolygonShape*)f->GetShape();
+				int32 count = polygonShape->m_count;
+				b2Vec2 prev, v;
+
+				for (int32 i = 0; i < count; ++i)
+				{
+					v = b->GetWorldPoint(polygonShape->m_vertices[i]);
+					if (i > 0)
+						DrawLine(METERS_TO_PIXELS(prev.x), METERS_TO_PIXELS(prev.y), METERS_TO_PIXELS(v.x), METERS_TO_PIXELS(v.y), RED);
+
+					prev = v;
+				}
+
+				v = b->GetWorldPoint(polygonShape->m_vertices[0]);
+				DrawLine(METERS_TO_PIXELS(prev.x), METERS_TO_PIXELS(prev.y), METERS_TO_PIXELS(v.x), METERS_TO_PIXELS(v.y), RED);
+			}
+			break;
+
+			case b2Shape::e_chain:
+			{
+				b2ChainShape* shape = (b2ChainShape*)f->GetShape();
+				b2Vec2 prev, v;
+
+				for (int32 i = 0; i < shape->m_count; ++i)
+				{
+					v = b->GetWorldPoint(shape->m_vertices[i]);
+					if (i > 0)
+						DrawLine(METERS_TO_PIXELS(prev.x), METERS_TO_PIXELS(prev.y), METERS_TO_PIXELS(v.x), METERS_TO_PIXELS(v.y), GREEN);
+
+					prev = v;
+				}
+
+				v = b->GetWorldPoint(shape->m_vertices[0]);
+				DrawLine(METERS_TO_PIXELS(prev.x), METERS_TO_PIXELS(prev.y), METERS_TO_PIXELS(v.x), METERS_TO_PIXELS(v.y), GREEN);
+			}
+			break;
+
+			case b2Shape::e_edge:
+			{
+				b2EdgeShape* shape = (b2EdgeShape*)f->GetShape();
+				b2Vec2 v1 = b->GetWorldPoint(shape->m_vertex1);
+				b2Vec2 v2 = b->GetWorldPoint(shape->m_vertex2);
+				DrawLine(METERS_TO_PIXELS(v1.x), METERS_TO_PIXELS(v1.y), METERS_TO_PIXELS(v2.x), METERS_TO_PIXELS(v2.y), BLUE);
+			}
+			break;
+			}
+		}
+	}
 	return UPDATE_CONTINUE;
 }
 
@@ -274,31 +369,30 @@ void ModulePhysics::BeginContact(b2Contact* contact)
 }
 PhysBody* ModulePhysics::CreateRectangleSensor(int x, int y, int width, int height)
 {
-	PhysBody* pbody = new PhysBody();
+    PhysBody* pbody = new PhysBody();
+    pbody->isActive = true;
 
-	b2BodyDef body;
-	body.type = b2_staticBody;
-	body.position.Set(PIXEL_TO_METERS(x), PIXEL_TO_METERS(y));
-	body.userData.pointer = reinterpret_cast<uintptr_t>(pbody);
+    b2BodyDef body;
+    body.type = b2_staticBody;
+    body.position.Set(PIXEL_TO_METERS(x), PIXEL_TO_METERS(y));
+    body.userData.pointer = reinterpret_cast<uintptr_t>(pbody);
 
-	b2Body* b = world->CreateBody(&body);
-	b2PolygonShape box;
-	box.SetAsBox(PIXEL_TO_METERS(width) * 0.5f, PIXEL_TO_METERS(height) * 0.5f);
+    b2Body* b = world->CreateBody(&body);
+    b2PolygonShape box;
+    box.SetAsBox(PIXEL_TO_METERS(width) * 0.5f, PIXEL_TO_METERS(height) * 0.5f);
 
-	b2FixtureDef fixture;
-	fixture.shape = &box;
-	fixture.isSensor = true; // Configurar como sensor
+    b2FixtureDef fixture;
+    fixture.shape = &box;
+    fixture.isSensor = true; // Configurar como sensor
 
-	b->CreateFixture(&fixture);
+    b->CreateFixture(&fixture);
 
-	pbody->body = b;
-	pbody->width = width;
-	pbody->height = height;
+    pbody->body = b;
+    pbody->width = width;
+    pbody->height = height;
 
-	return pbody;
-
+    return pbody;
 }
-
 std::vector<b2Vec2> PhysBody::GetVertices() const
 {
 	std::vector<b2Vec2> vertices; // Vector para almacenar los vértices

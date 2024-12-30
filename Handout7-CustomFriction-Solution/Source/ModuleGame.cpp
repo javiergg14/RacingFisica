@@ -46,13 +46,10 @@ bool ModuleGame::Start()
     m_tdTire.push_back(*car2); // Agregar coche 2
 
     // Configuración de checkpoints
-    lapCount = 0;
-    currentCheckpointIndex = 0;
     for (PhysBody* checkpoint : checkpoints)
     {
         checkpoint->listener = this;
     }
-
     return ret;
 }
 
@@ -191,8 +188,13 @@ bool ModuleGame::MainMenu()
         {
             PlaySound(Selection);
             isMapSelectorActive = false;
+            car1LapCount = 0;
+            car2LapCount = 0;
+            car1CurrentCheckpointIndex = 0;
+            car2CurrentCheckpointIndex = 0;
             CreateColliders();
             CreateCheckpoints();
+
         }
     }
     // Liberar el estado de la tecla ENTER cuando sea soltada
@@ -203,53 +205,59 @@ bool ModuleGame::MainMenu()
 // OnCollision para manejar colisiones
 void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 {
-    // Verificar colisiones con car1 y car2
-    if (bodyA == car1->GetBody() || bodyB == car1->GetBody())
-    {
-        LOG("Colisión detectada para el coche 1");
-    }
-    else if (bodyA == car2->GetBody() || bodyB == car2->GetBody())
-    {
-        LOG("Colisión detectada para el coche 2");
-    }
-
-    // Manejo de otros cuerpos físicos, como checkpoints
+    // Verificar si colisionó con un checkpoint
     for (size_t i = 0; i < checkpoints.size(); ++i)
     {
         if (bodyA == checkpoints[i] || bodyB == checkpoints[i])
         {
-            printf("hola");
-            if (i == currentCheckpointIndex)
+            // Identificar qué coche alcanzó el checkpoint
+            if (bodyA == car1->GetBody() || bodyB == car1->GetBody())
             {
-                LOG("Checkpoint %d alcanzado!", currentCheckpointIndex + 1);
-                currentCheckpointIndex++;
-
-                // Si alcanzamos el último checkpoint y volvemos al de inicio/fin
-                if (currentCheckpointIndex >= checkpoints.size())
+                // Gestionar el checkpoint para el coche 1
+                if (i == car1CurrentCheckpointIndex && checkpoints[i]->isActive)
                 {
-                    // Validar si estamos en el checkpoint de inicio/fin
-                    if (i == 0)
-                    {
-                        lapCount++;
-                        LOG("Vuelta Completada! Total de Vueltas: %d", lapCount);
-
-                        if (lapCount == 3)
-                        {
-                            gameFinished = true;
-                            totalTime = m_creationTimer.ReadSec();
-                        }
-
-                    }
-                    currentCheckpointIndex = 0; // Reiniciar al primer checkpoint
+                    car1CurrentCheckpointIndex++;
+                    CountLapsAndManageCheckpoints(car1LapCount, car1CurrentCheckpointIndex, 1);
                 }
             }
-            else
+            else if (bodyA == car2->GetBody() || bodyB == car2->GetBody())
             {
-                LOG("Checkpoint %d ignorado.", i + 1);
+                // Gestionar el checkpoint para el coche 2
+                if (i == car2CurrentCheckpointIndex && checkpoints[i]->isActive)
+                {
+                    car2CurrentCheckpointIndex++;
+                    CountLapsAndManageCheckpoints(car2LapCount, car2CurrentCheckpointIndex, 2);
+                }
             }
-
-            break;
+            break; // Salir del bucle, ya que encontramos el checkpoint relevante
         }
+    }
+}
+void ModuleGame::CountLapsAndManageCheckpoints(int& lapCount, int& currentCheckpointIndex, int carNumber)
+{
+    // Verificar si el coche alcanzó el checkpoint correcto
+    if (currentCheckpointIndex >= checkpoints.size()) {
+        currentCheckpointIndex = 0; // Reiniciar al primer checkpoint
+        lapCount++; // Incrementar las vueltas
+        LOG("¡Coche %d completó una vuelta! Total de vueltas: %d", carNumber, lapCount);
+
+        // Reactivar todos los checkpoints para la siguiente vuelta
+        for (auto& checkpoint : checkpoints) {
+            checkpoint->isActive = true; // Reactivar todos los checkpoints
+        }
+
+        // Verificar si el coche ha terminado la carrera
+        if (lapCount == 3) // 3 vueltas para terminar la carrera
+        {
+            gameFinished = true;
+            winner = carNumber; // Establece el ganador
+            totalTime = m_creationTimer.ReadSec();
+            LOG("¡Coche %d terminó la carrera! Tiempo total: %.2f segundos", carNumber, totalTime);
+        }
+    }
+    else {
+        // Si alcanzó un checkpoint válido, desactivar el checkpoint actual
+        checkpoints[currentCheckpointIndex - 1]->isActive = false; // Desactivar el checkpoint actual
     }
 }
 update_status ModuleGame::Update()
@@ -261,11 +269,20 @@ update_status ModuleGame::Update()
     }
     // Dibujar fondo y texto básico
     DrawTexture(mapTextures[selectedMapIndex], 0, 0, WHITE);
-    DrawText(TextFormat("Laps: %d", lapCount), 20, 20, 30, WHITE);
+    if (!gameFinished) {
+        DrawText(TextFormat("Laps: %d", car1LapCount), 20, 20, 30, WHITE);
+        DrawText(TextFormat("Laps: %d", car2LapCount), 1200, 20, 30, WHITE);
+      }
     // Win text si el juego ha terminado
     if (gameFinished) {
-        DrawText("YOU WIN", 250, 300, 50, GREEN);
-        DrawText(TextFormat("Time: %.2f seconds", totalTime), 250, 400, 30, WHITE);
+        // Mostrar mensaje dinámico con el número del jugador ganador
+        DrawText(TextFormat("PLAYER %d WINS!", winner), 290, 300, 100, GREEN);
+        DrawText(TextFormat("Time: %.2f seconds", totalTime), 430, 400, 50, WHITE);
+        if (IsKeyPressed(KEY_ENTER))
+        {
+            gameFinished = false;
+            isMenuActive = true;
+        }
         return UPDATE_CONTINUE;
     }
     // Turbo para car1
@@ -624,31 +641,21 @@ void Car::Update(float staticFriction, float dynamicFriction)
 void ModuleGame::CreateCheckpoints()
 {
     // Checkpoint 1: Inicio/Fin
-    if (selectedMapIndex == 0)
-    {
+    if (selectedMapIndex == 0) {
         checkpoints.push_back(App->physics->CreateRectangleSensor(928, 652, 75, 10));  // Checkpoint 1: Inicio/Fin 
         // Otros checkpoints
         checkpoints.push_back(App->physics->CreateRectangleSensor(928, 550, 75, 10));  // Checkpoint 2: Carretera derecha
-        checkpoints.push_back(App->physics->CreateRectangleSensor(928, 400, 75, 10));  // Checkpoint 3: Carretera derecha
-        checkpoints.push_back(App->physics->CreateRectangleSensor(928, 250, 75, 10));  // Checkpoint 4: Carretera derecha
-        checkpoints.push_back(App->physics->CreateRectangleSensor(928, 100, 75, 10));  // Checkpoint 5: Carretera derecha
-
-        checkpoints.push_back(App->physics->CreateRectangleSensor(850, 57, 10, 65));  // Checkpoint 6: Carretera de Arriba
-        checkpoints.push_back(App->physics->CreateRectangleSensor(700, 57, 10, 65));  // Checkpoint 7: Carretera de Arriba
-        checkpoints.push_back(App->physics->CreateRectangleSensor(550, 57, 10, 65));  // Checkpoint 8: Carretera de Arriba
-        checkpoints.push_back(App->physics->CreateRectangleSensor(400, 57, 10, 65));  // Checkpoint 9: Carretera de Arriba
-        checkpoints.push_back(App->physics->CreateRectangleSensor(250, 57, 10, 65));  // Checkpoint 10: Carretera de Arriba
-
-        checkpoints.push_back(checkpoints[0]); // Checkpoint final es el mismo que el inicio
     }
     if (selectedMapIndex == 1) {
-
+        checkpoints.push_back(App->physics->CreateRectangleSensor(928, 652, 75, 10));  // Checkpoint 1: Inicio/Fin 
+        // Otros checkpoints
+        checkpoints.push_back(App->physics->CreateRectangleSensor(928, 550, 75, 10));  // Checkpoint 2: Carretera derecha
     }
-    if (selectedMapIndex == 2)
-    {
-
+    if (selectedMapIndex == 2) {
+        checkpoints.push_back(App->physics->CreateRectangleSensor(928, 652, 75, 10));  // Checkpoint 1: Inicio/Fin 
+        // Otros checkpoints
+        checkpoints.push_back(App->physics->CreateRectangleSensor(928, 550, 75, 10));  // Checkpoint 2: Carretera derecha
     }
-  
 }
 
 void ModuleGame::CreateColliders()
@@ -751,8 +758,6 @@ void ModuleGame::CreateColliders()
     67, 64,
     25, 157
     };
-
-
     if (selectedMapIndex == 0)
     {
         PhysBody* collider1 = App->physics->CreateChain(0, 0, chain1Points, sizeof(chain1Points) / sizeof(int));  

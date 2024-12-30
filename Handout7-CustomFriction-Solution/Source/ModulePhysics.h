@@ -18,7 +18,7 @@
 class PhysBody
 {
 public:
-    PhysBody() : listener(NULL), body(NULL)
+    PhysBody() : listener(NULL), body(NULL), isActive(false) 
     {}
 
     void GetPhysicPosition(int& x, int& y) const;
@@ -29,6 +29,7 @@ public:
     std::vector<b2Vec2> GetVertices() const; // Método bien declarado
 
 public:
+    bool isActive; // Estado del sensor
     int width, height;
     b2Body* body;
     Module* listener;
