@@ -29,7 +29,7 @@ bool ModuleGame::Start()
     controlsTexture = LoadTexture("Assets/Controls.png");
     Selection = LoadSound("Assets/Sounds/SelectionMade.wav");
     SwitchOption = LoadSound("Assets/Sounds/SwitchOption.wav");
-
+    countdownSound = LoadSound("Assets/Sounds/Countdown.wav");
     LOG("Loading Intro assets");
     bool ret = true;
 
@@ -77,7 +77,7 @@ bool ModuleGame::MainMenu()
         // Dibuja el menú principal
         DrawTexture(MenuTexture, 0, 0, WHITE);
         const char* menuOptions[] = { "Start", "Credits", "Controls", "Exit" };
-        const int totalOptions = 4; 
+        const int totalOptions = 4;
         for (int i = 0; i < totalOptions; ++i)
         {
             Color color = (i == selectedMenuOption) ? YELLOW : WHITE;
@@ -112,7 +112,7 @@ bool ModuleGame::MainMenu()
                 break;
             case 2: // Controls
                 showControls = true;
-                isMenuActive = false; 
+                isMenuActive = false;
                 break;
             case 3: // Exit
                 exit(1);
@@ -127,15 +127,15 @@ bool ModuleGame::MainMenu()
         if (IsKeyPressed(KEY_BACKSPACE))
         {
             isMenuActive = true;
-            showCredits = false; 
+            showCredits = false;
         }
     }
     //Show Controls Screen
     else if (showControls)
     {
-        DrawTexture(controlsTexture, 0, 0, WHITE); 
-        DrawText("Press BACKSPACE to return", 450, 950, 30, WHITE); 
-        if (IsKeyPressed(KEY_BACKSPACE)) 
+        DrawTexture(controlsTexture, 0, 0, WHITE);
+        DrawText("Press BACKSPACE to return", 450, 950, 30, WHITE);
+        if (IsKeyPressed(KEY_BACKSPACE))
         {
             isMenuActive = true;
             showControls = false;
@@ -187,10 +187,10 @@ bool ModuleGame::MainMenu()
             selectedMapIndex = (selectedMapIndex - 1 + 3) % 3;
             PlaySound(SwitchOption);
         }
-        else if (IsKeyPressed(KEY_ENTER))
-        {
+        else if (IsKeyPressed(KEY_ENTER)) {
             PlaySound(Selection);
             isMapSelectorActive = false;
+
             car1LapCount = 1;
             car2LapCount = 1;
             car1CurrentCheckpointIndex = 0;
@@ -198,6 +198,11 @@ bool ModuleGame::MainMenu()
             CreateColliders();
             CreateCheckpoints();
 
+            // Inicializar contador
+            countdownActive = true;
+            countdownTimer = 0.0f;
+            countdownValue = 3;
+            playersCanMove = false;
         }
     }
     // Liberar el estado de la tecla ENTER cuando sea soltada
@@ -267,14 +272,35 @@ update_status ModuleGame::Update()
 {
     if (showCredits || isMenuActive || isMapSelectorActive||showControls)
     { MainMenu(); return UPDATE_CONTINUE;}
+    // Dibujar el mapa seleccionado siempre
+    DrawTexture(mapTextures[selectedMapIndex], 0, 0, WHITE);
 
-    DrawTexture(mapTextures[selectedMapIndex], 0, 0, WHITE); //Dibujar mapa
+    // Dibujar los coches incluso durante el conteo regresivo
+    for (Car& c : m_tdTire) {
+        if (c.GetPlayer() == 1) {
+            c.Draw(car1Texture);
+        }
+        else if (c.GetPlayer() == 2) {
+            c.Draw(car2Texture);
+        }
+    }
 
-    if (!gameFinished) { // Textos lapcount
-        DrawText(TextFormat("Lap: %d", car1LapCount), 20, 20, 30, WHITE);
-        DrawText(TextFormat("Lap: %d", car2LapCount), 1200, 20, 30, WHITE);
+    if (!gameFinished && playersCanMove) {
+        for (Car& c : m_tdTire) {
+            if ((c.GetPlayer() == 1 && car1TurboActive) || (c.GetPlayer() == 2 && car2TurboActive)) {
+                c.ApplyTurbo();
+            }
+            c.Update(m_staticFrictions[m_currentStaticFriction], m_dynamicFrictions[m_currentDynamicFriction]);
 
-      }
+            if (c.GetPlayer() == 1) {
+                c.Draw(car1Texture);
+            }
+            else if (c.GetPlayer() == 2) {
+                c.Draw(car2Texture);
+            }
+        }
+    }
+
     // Win text si el juego ha terminado
     if (gameFinished) {
         DrawText(TextFormat("PLAYER %d WINS!", winner), 290, 300, 100, GREEN);
@@ -287,6 +313,10 @@ update_status ModuleGame::Update()
             isMenuActive = true;
         }
         return UPDATE_CONTINUE;
+    }
+    else {
+            DrawText(TextFormat("Lap: %d", car1LapCount), 20, 20, 30, WHITE);
+            DrawText(TextFormat("Lap: %d", car2LapCount), 1200, 20, 30, WHITE);
     }
     // Turbo para car1
     if (IsKeyPressed(KEY_LEFT_SHIFT) && car1TurboUsedTime < turboDuration) {
@@ -341,21 +371,7 @@ update_status ModuleGame::Update()
             }
         }
     }
-    // Dibujar coches y aplicar turbo
-    for (Car& c : m_tdTire)
-    {
-        if ((c.GetPlayer() == 1 && car1TurboActive) || (c.GetPlayer() == 2 && car2TurboActive)) {
-            c.ApplyTurbo();
-        }
-        c.Update(m_staticFrictions[m_currentStaticFriction], m_dynamicFrictions[m_currentDynamicFriction]);
 
-        if (c.GetPlayer() == 1) {
-            c.Draw(car1Texture);
-        }
-        else if (c.GetPlayer() == 2) {
-            c.Draw(car2Texture);
-        }
-    }
     // Indicadores de turbo 
     float car1UsedPercentage = car1TurboUsedTime / turboDuration;
     DrawRectangle(50, 800, 20, 150, LIGHTGRAY);
@@ -364,7 +380,33 @@ update_status ModuleGame::Update()
     float car2UsedPercentage = car2TurboUsedTime / turboDuration;
     DrawRectangle(100, 800, 20, 150, LIGHTGRAY);
     DrawRectangle(100, 800 + 150 * car2UsedPercentage, 20, 150 * (1.0f - car2UsedPercentage), RED);
+    // Manejo del conteo regresivo
+    if(countdownActive) {
+        countdownTimer += GetFrameTime();
 
+        // Reproducir el sonido solo al inicio del countdown
+        if (!countdownSoundPlayed) {
+            PlaySound(countdownSound);
+            countdownSoundPlayed = true;
+        }
+
+        if (countdownTimer >= 1.0f) {
+            countdownTimer = 0.0f;
+            countdownValue--;
+            if (countdownValue < 0) {
+                countdownActive = false;
+                playersCanMove = true;
+            }
+        }
+        // Mostrar el contador en pantalla
+        if (countdownValue > 0) {
+            DrawText(TextFormat("%d", countdownValue), 660, 400, 120, WHITE);
+        }
+        else if (countdownValue == 0) {
+            DrawText("GO!", 610, 400, 120, GREEN);
+        }
+        return UPDATE_CONTINUE;
+    }
     return UPDATE_CONTINUE;
 }
 Collider::Collider(PhysBody* i_body)
@@ -657,8 +699,8 @@ void ModuleGame::CreateCheckpoints()
         checkpoints.push_back(App->physics->CreateRectangleSensor(1020, 115, 5, 200)); // Septimo
         checkpoints.push_back(App->physics->CreateRectangleSensor(790, 350, 200, 5)); // Octavo
         checkpoints.push_back(App->physics->CreateRectangleSensor(580, 650, 200, 5)); // Novena
-        checkpoints.push_back(App->physics->CreateRectangleSensor(330, 915, 5, 200)); // Meta Primera
-        checkpoints.push_back(App->physics->CreateRectangleSensor(125, 525, 203, 5)); // Septimo
+        checkpoints.push_back(App->physics->CreateRectangleSensor(330, 915, 5, 200)); // Decima
+        checkpoints.push_back(App->physics->CreateRectangleSensor(125, 525, 203, 5)); // Onceava 
         checkpoints.push_back(App->physics->CreateRectangleSensor(290, 115, 5, 200)); // Meta Ultima
     }
 }

@@ -100,6 +100,7 @@ public:
     //Sounds
     Sound Selection;
     Sound SwitchOption;
+    Sound countdownSound;
     // Estado del juego
     bool isMenuActive = true;
     bool isMapSelectorActive = false;
@@ -109,7 +110,12 @@ public:
     bool showCredits = false;
     bool isEnterPressed = false;
     bool showControls = false;
+    bool countdownActive = false;
+    bool playersCanMove = false;
+    bool countdownSoundPlayed = false;
 
+    float countdownTimer = 0.0f;
+    int countdownValue = 3;
 // Turbo para car1
     bool car1TurboActive = false;
     float car1TurboUsedTime = 0.0f;
