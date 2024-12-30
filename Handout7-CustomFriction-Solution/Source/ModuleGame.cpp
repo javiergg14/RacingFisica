@@ -268,46 +268,31 @@ void ModuleGame::CountLapsAndManageCheckpoints(int& lapCount, int& currentCheckp
         checkpoints[currentCheckpointIndex - 1]->isActive = false; // Desactivar el checkpoint actual
     }
 }
-update_status ModuleGame::Update()
-{
-    if (showCredits || isMenuActive || isMapSelectorActive||showControls)
-    { MainMenu(); return UPDATE_CONTINUE;}
-    // Dibujar el mapa seleccionado siempre
+update_status ModuleGame::Update() {
+    if (showCredits || isMenuActive || isMapSelectorActive || showControls) {
+        MainMenu();
+        return UPDATE_CONTINUE;
+    }
+
     DrawTexture(mapTextures[selectedMapIndex], 0, 0, WHITE);
 
-    // Dibujar los coches incluso durante el conteo regresivo
     for (Car& c : m_tdTire) {
-        if (c.GetPlayer() == 1) {
-            c.Draw(car1Texture);
-        }
-        else if (c.GetPlayer() == 2) {
-            c.Draw(car2Texture);
-        }
+        c.Draw(c.GetPlayer() == 1 ? car1Texture : car2Texture);
     }
 
     if (!gameFinished && playersCanMove) {
         for (Car& c : m_tdTire) {
-            if ((c.GetPlayer() == 1 && car1TurboActive) || (c.GetPlayer() == 2 && car2TurboActive)) {
-                c.ApplyTurbo();
-            }
+            if ((c.GetPlayer() == 1 && car1TurboActive) || (c.GetPlayer() == 2 && car2TurboActive)) c.ApplyTurbo();
             c.Update(m_staticFrictions[m_currentStaticFriction], m_dynamicFrictions[m_currentDynamicFriction]);
-
-            if (c.GetPlayer() == 1) {
-                c.Draw(car1Texture);
-            }
-            else if (c.GetPlayer() == 2) {
-                c.Draw(car2Texture);
-            }
+            c.Draw(c.GetPlayer() == 1 ? car1Texture : car2Texture);
         }
     }
 
-    // Win text si el juego ha terminado
     if (gameFinished) {
         DrawText(TextFormat("PLAYER %d WINS!", winner), 290, 300, 100, GREEN);
         DrawText(TextFormat("Time: %.2f seconds", totalTime), 430, 400, 50, WHITE);
-        DrawText("Press ENTER to continue", 450, 950, 30, WHITE);
-        if (IsKeyPressed(KEY_ENTER))
-        {
+        DrawText("Press ENTER to continue", 460, 950, 30, WHITE);
+        if (IsKeyPressed(KEY_ENTER)) {
             RemoveMapColliders();
             gameFinished = false;
             isMenuActive = true;
@@ -315,64 +300,32 @@ update_status ModuleGame::Update()
         return UPDATE_CONTINUE;
     }
     else {
-            DrawText(TextFormat("Lap: %d", car1LapCount), 20, 20, 30, WHITE);
-            DrawText(TextFormat("Lap: %d", car2LapCount), 1200, 20, 30, WHITE);
-    }
-    // Turbo para car1
-    if (IsKeyPressed(KEY_LEFT_SHIFT) && car1TurboUsedTime < turboDuration) {
-        car1TurboActive = true;
-    }
-    // Manejo de tiempo de uso y desactivación
-    if (car1TurboActive) {
-        car1TurboUsedTime += GetFrameTime();
-        if (car1TurboUsedTime >= turboDuration) {
-            car1TurboActive = false;
-            car1TurboUsedTime = turboDuration;
-        }
-        if (IsKeyReleased(KEY_LEFT_SHIFT)) {
-            car1TurboActive = false;
-        }
-    }
-    else {
-        car1TurboRechargeTimer += GetFrameTime();
-        if (car1TurboRechargeTimer > turboRechargeDuration) {
-            car1TurboRechargeTimer = turboRechargeDuration;
-        }
-        if (car1TurboUsedTime > 0.0f) {
-            car1TurboUsedTime -= GetFrameTime() * (turboDuration / turboRechargeDuration);
-            if (car1TurboUsedTime < 0.0f) {
-                car1TurboUsedTime = 0.0f;
-            }
-        }
-    }
-    // Turbo para car2
-    if (IsKeyPressed(KEY_SPACE) && car2TurboUsedTime < turboDuration) {
-        car2TurboActive = true;
-    }
-    if (car2TurboActive) {
-        car2TurboUsedTime += GetFrameTime();
-        if (car2TurboUsedTime >= turboDuration) {
-            car2TurboActive = false;
-            car2TurboUsedTime = turboDuration;
-        }
-        if (IsKeyReleased(KEY_SPACE)) {
-            car2TurboActive = false;
-        }
-    }
-    else {
-        car2TurboRechargeTimer += GetFrameTime();
-        if (car2TurboRechargeTimer > turboRechargeDuration) {
-            car2TurboRechargeTimer = turboRechargeDuration;
-        }
-        if (car2TurboUsedTime > 0.0f) {
-            car2TurboUsedTime -= GetFrameTime() * (turboDuration / turboRechargeDuration);
-            if (car2TurboUsedTime < 0.0f) {
-                car2TurboUsedTime = 0.0f;
-            }
-        }
+        DrawText(TextFormat("Lap: %d", car1LapCount), 20, 20, 30, WHITE);
+        DrawText(TextFormat("Lap: %d", car2LapCount), 1200, 20, 30, WHITE);
     }
 
-    // Indicadores de turbo 
+    if (IsKeyPressed(KEY_LEFT_SHIFT) && car1TurboUsedTime < turboDuration) car1TurboActive = true;
+    if (car1TurboActive) {
+        car1TurboUsedTime += GetFrameTime();
+        if (car1TurboUsedTime >= turboDuration || IsKeyReleased(KEY_LEFT_SHIFT)) car1TurboActive = false;
+        if (car1TurboUsedTime >= turboDuration) car1TurboUsedTime = turboDuration;
+    }
+    else {
+        car1TurboRechargeTimer = fmin(car1TurboRechargeTimer + GetFrameTime(), turboRechargeDuration);
+        if (car1TurboUsedTime > 0.0f) car1TurboUsedTime = fmax(car1TurboUsedTime - GetFrameTime() * (turboDuration / turboRechargeDuration), 0.0f);
+    }
+
+    if (IsKeyPressed(KEY_SPACE) && car2TurboUsedTime < turboDuration) car2TurboActive = true;
+    if (car2TurboActive) {
+        car2TurboUsedTime += GetFrameTime();
+        if (car2TurboUsedTime >= turboDuration || IsKeyReleased(KEY_SPACE)) car2TurboActive = false;
+        if (car2TurboUsedTime >= turboDuration) car2TurboUsedTime = turboDuration;
+    }
+    else {
+        car2TurboRechargeTimer = fmin(car2TurboRechargeTimer + GetFrameTime(), turboRechargeDuration);
+        if (car2TurboUsedTime > 0.0f) car2TurboUsedTime = fmax(car2TurboUsedTime - GetFrameTime() * (turboDuration / turboRechargeDuration), 0.0f);
+    }
+
     float car1UsedPercentage = car1TurboUsedTime / turboDuration;
     DrawRectangle(50, 800, 20, 150, LIGHTGRAY);
     DrawRectangle(50, 800 + 150 * car1UsedPercentage, 20, 150 * (1.0f - car1UsedPercentage), BLUE);
@@ -380,11 +333,9 @@ update_status ModuleGame::Update()
     float car2UsedPercentage = car2TurboUsedTime / turboDuration;
     DrawRectangle(100, 800, 20, 150, LIGHTGRAY);
     DrawRectangle(100, 800 + 150 * car2UsedPercentage, 20, 150 * (1.0f - car2UsedPercentage), RED);
-    // Manejo del conteo regresivo
-    if(countdownActive) {
-        countdownTimer += GetFrameTime();
 
-        // Reproducir el sonido solo al inicio del countdown
+    if (countdownActive) {
+        countdownTimer += GetFrameTime();
         if (!countdownSoundPlayed) {
             PlaySound(countdownSound);
             countdownSoundPlayed = true;
@@ -398,17 +349,16 @@ update_status ModuleGame::Update()
                 playersCanMove = true;
             }
         }
-        // Mostrar el contador en pantalla
-        if (countdownValue > 0) {
-            DrawText(TextFormat("%d", countdownValue), 660, 400, 120, WHITE);
-        }
-        else if (countdownValue == 0) {
-            DrawText("GO!", 610, 400, 120, GREEN);
-        }
+
+        if (countdownValue > 0) DrawText(TextFormat("%d", countdownValue), 660, 400, 120, WHITE);
+        else if (countdownValue == 0) DrawText("GO!", 610, 400, 120, GREEN);
+
         return UPDATE_CONTINUE;
     }
+
     return UPDATE_CONTINUE;
 }
+
 Collider::Collider(PhysBody* i_body)
     : m_body(i_body)
 {
