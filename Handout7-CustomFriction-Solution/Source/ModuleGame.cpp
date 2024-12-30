@@ -76,8 +76,8 @@ bool ModuleGame::MainMenu()
     {
         // Dibuja el menú principal
         DrawTexture(MenuTexture, 0, 0, WHITE);
-        const char* menuOptions[] = { "Start", "Credits", "Controls", "Exit" }; // Añadir "Controls"
-        const int totalOptions = 4; // Actualizar el total de opciones
+        const char* menuOptions[] = { "Start", "Credits", "Controls", "Exit" };
+        const int totalOptions = 4; 
         for (int i = 0; i < totalOptions; ++i)
         {
             Color color = (i == selectedMenuOption) ? YELLOW : WHITE;
@@ -111,14 +111,15 @@ bool ModuleGame::MainMenu()
                 isMenuActive = false;
                 break;
             case 2: // Controls
-                showControls = true; // Activar la pantalla de controles
-                isMenuActive = false; // Desactivar el menú principal
+                showControls = true;
+                isMenuActive = false; 
                 break;
             case 3: // Exit
                 exit(1);
             }
         }
     }
+    //Show Credits Screen
     else if (showCredits)
     {
         DrawTexture(creditsTexture, 0, 0, WHITE);
@@ -126,19 +127,21 @@ bool ModuleGame::MainMenu()
         if (IsKeyPressed(KEY_BACKSPACE))
         {
             isMenuActive = true;
-            showCredits = false; // Regresar al menú
+            showCredits = false; 
         }
     }
-    else if (showControls) // Mostrar los controles
+    //Show Controls Screen
+    else if (showControls)
     {
-        DrawTexture(controlsTexture, 0, 0, WHITE); // Dibuja la textura de controles
-        DrawText("Press BACKSPACE to return", 450, 950, 30, WHITE); // Instrucciones para regresar
-        if (IsKeyPressed(KEY_BACKSPACE)) // Regresar al menú principal
+        DrawTexture(controlsTexture, 0, 0, WHITE); 
+        DrawText("Press BACKSPACE to return", 450, 950, 30, WHITE); 
+        if (IsKeyPressed(KEY_BACKSPACE)) 
         {
             isMenuActive = true;
-            showControls = false; // Desactivar la pantalla de controles
+            showControls = false;
         }
     }
+    //Map Selector Screen
     else if (isMapSelectorActive)
     {
         if (IsKeyPressed(KEY_BACKSPACE))
@@ -168,12 +171,12 @@ bool ModuleGame::MainMenu()
 
             // Mostrar el texto solo si el mapa está seleccionado
             if (i == selectedMapIndex) {
-                const char* mapText = "Map 1: Brewery Hills "; // Valor predeterminado
-                if (i == 1) mapText = "Map 2: Foamy Track";
-                else if (i == 2) mapText = "Map 3: Barrel Road";
+                const char* mapText = "Brewery Hills "; // Valor predeterminado
+                if (i == 1) mapText = "Foamy Track";
+                else if (i == 2) mapText = "Barrel Road";
 
                 // Ajustar la posición del texto sobre el mapa seleccionado
-                DrawText(mapText, 285, 775, 80, WHITE);
+                DrawText(mapText, 365, 775, 100, WHITE);
             }
         }
         if (IsKeyPressed(KEY_RIGHT)) {
@@ -263,21 +266,20 @@ void ModuleGame::CountLapsAndManageCheckpoints(int& lapCount, int& currentCheckp
 update_status ModuleGame::Update()
 {
     if (showCredits || isMenuActive || isMapSelectorActive||showControls)
-    {
-        MainMenu();
-        return UPDATE_CONTINUE;
-    }
-    // Dibujar fondo y texto básico
-    DrawTexture(mapTextures[selectedMapIndex], 0, 0, WHITE);
-    if (!gameFinished) {
+    { MainMenu(); return UPDATE_CONTINUE;}
+
+    DrawTexture(mapTextures[selectedMapIndex], 0, 0, WHITE); //Dibujar mapa
+
+    if (!gameFinished) { // Textos lapcount
         DrawText(TextFormat("Laps: %d", car1LapCount), 20, 20, 30, WHITE);
         DrawText(TextFormat("Laps: %d", car2LapCount), 1200, 20, 30, WHITE);
+
       }
     // Win text si el juego ha terminado
     if (gameFinished) {
-        // Mostrar mensaje dinámico con el número del jugador ganador
         DrawText(TextFormat("PLAYER %d WINS!", winner), 290, 300, 100, GREEN);
         DrawText(TextFormat("Time: %.2f seconds", totalTime), 430, 400, 50, WHITE);
+        DrawText("Press ENTER to continue", 450, 950, 30, WHITE);
         if (IsKeyPressed(KEY_ENTER))
         {
             gameFinished = false;
@@ -353,12 +355,11 @@ update_status ModuleGame::Update()
             c.Draw(car2Texture);
         }
     }
-    // Indicadores de turbo para car1
+    // Indicadores de turbo 
     float car1UsedPercentage = car1TurboUsedTime / turboDuration;
     DrawRectangle(50, 800, 20, 150, LIGHTGRAY);
     DrawRectangle(50, 800 + 150 * car1UsedPercentage, 20, 150 * (1.0f - car1UsedPercentage), BLUE);
 
-    // Indicadores de turbo para car2
     float car2UsedPercentage = car2TurboUsedTime / turboDuration;
     DrawRectangle(100, 800, 20, 150, LIGHTGRAY);
     DrawRectangle(100, 800 + 150 * car2UsedPercentage, 20, 150 * (1.0f - car2UsedPercentage), RED);
@@ -410,10 +411,10 @@ Car::Car(PhysBody* i_body, float i_mass, int i_player, ModuleGame* moduleGame)
     m_lifeTime.Start();
 }
 void Car::ApplyTurbo() {
-    float turboForce = 500000.0f; // Fuerza adicional del turbo
-    float turboMaxSpeed = 300.0f; // Velocidad máxima durante el turbo (más alta que la velocidad normal)
+    float turboForce = 500000.0f;
+    float turboMaxSpeed = 3000.0f; 
 
-    // Obtener el vector de dirección "adelante" del coche en el mundo
+    // Obtener el vector de dirección del coche
     b2Vec2 forwardDirection = m_body->body->GetWorldVector(b2Vec2(0.0f, -1.0f));
     forwardDirection.Normalize();
 
@@ -423,10 +424,9 @@ void Car::ApplyTurbo() {
         m_body->body->ApplyLinearImpulse(turboImpulse, m_body->body->GetWorldCenter(), true);
     }
 
-    // Obtener la velocidad actual del coche
-    b2Vec2 velocity = m_body->body->GetLinearVelocity();
+    b2Vec2 velocity = m_body->body->GetLinearVelocity(); //velocidad del coche
 
-    // Permitir temporalmente una velocidad máxima mayor mientras el turbo está activo
+    // Permitir una velocidad máxima mayor mientras el turbo está activo
     if (velocity.Length() > turboMaxSpeed) {
         velocity.Normalize();
         velocity *= turboMaxSpeed;
@@ -434,44 +434,35 @@ void Car::ApplyTurbo() {
     }
 }
 Circle::~Circle()
-{
-}
-
+{ }
 Car::~Car()
-{
-}
-
+{ }
 float Circle::GetLifeTime() const
 {
 	return m_lifeTime.ReadSec();
 }
-
 float Car::GetLifeTime() const
 {
     return m_lifeTime.ReadSec();
 }
-
 int Car::GetPlayer()
 {
     return player;
 }
-
 void Circle::Draw()
 {
 	b2Vec2 pos = m_body->body->GetPosition();
 	DrawCircle(METERS_TO_PIXELS(pos.x), METERS_TO_PIXELS(pos.y), (float)METERS_TO_PIXELS(std::log(mass)), Color{ 128, 0, 0, 128 });
-
 }
-
 void Car::Draw(Texture2D texture)
 {
     // Obtén la posición y el ángulo del cuerpo físico
-    b2Vec2 pos = m_body->body->GetPosition();        // Posición en el mundo físico
-    float angle = m_body->body->GetAngle() * RAD2DEG; // Ángulo en grados
+    b2Vec2 pos = m_body->body->GetPosition();      
+    float angle = m_body->body->GetAngle() * RAD2DEG; 
 
     // Dimensiones del coche (más pequeñas, en metros)
-    float width = 23.0f;  // Ancho del coche en metros
-    float height = 43.0f; // Alto del coche en metro
+    float width = 23.0f; 
+    float height = 43.0f; 
 
     // Convierte la posición del coche de metros a píxeles
     float posX = METERS_TO_PIXELS(pos.x);
@@ -559,7 +550,6 @@ void Circle::Update(float i_staticFricion, float i_dynamicFriction)
         }
     }
 }
-
 void Car::Update(float staticFriction, float dynamicFriction)
 {
 
@@ -602,7 +592,6 @@ void Car::Update(float staticFriction, float dynamicFriction)
             m_body->body->ApplyTorque(0.07f, true); // Gira a la derecha
         }
     }
-
     // **2. Fricción estática**
     b2Vec2 velocity = m_body->body->GetLinearVelocity(); // Obtener la velocidad actual
     if (velocity.LengthSquared() < 0.001f) { // Si el coche está prácticamente quieto
@@ -614,13 +603,11 @@ void Car::Update(float staticFriction, float dynamicFriction)
         );
         force += friction; // Añadir la fricción estática a la fuerza total
     }
-
     // **3. Fricción dinámica (frenado natural)**
     b2Vec2 friction = b2Vec2(
         -std::copysign(std::min(dynamicFriction, std::abs(velocity.x)), velocity.x), // Fricción en X
         -std::copysign(std::min(dynamicFriction, std::abs(velocity.y)), velocity.y)  // Fricción en Y
     );
-
     // Aplicar fuerzas al cuerpo (fuerza del usuario + fricción dinámica)
     m_body->body->ApplyForce(force + friction, m_body->body->GetWorldCenter(), true);
 
@@ -633,7 +620,6 @@ void Car::Update(float staticFriction, float dynamicFriction)
         velocity *= maxAllowedSpeed;
         m_body->body->SetLinearVelocity(velocity);
     }
-
     // **5. Amortiguación angular**
     float angularImpulse = angularDamping * m_body->body->GetInertia() * -m_body->body->GetAngularVelocity();
     m_body->body->ApplyAngularImpulse(angularImpulse, true);
@@ -642,26 +628,33 @@ void ModuleGame::CreateCheckpoints()
 {
     // Checkpoint 1: Inicio/Fin
     if (selectedMapIndex == 0) {
-        checkpoints.push_back(App->physics->CreateRectangleSensor(928, 652, 75, 10));  // Checkpoint 1: Inicio/Fin 
-        // Otros checkpoints
-        checkpoints.push_back(App->physics->CreateRectangleSensor(928, 550, 75, 10));  // Checkpoint 2: Carretera derecha
+        checkpoints.push_back(App->physics->CreateRectangleSensor(610, 115, 5, 200));
+        checkpoints.push_back(App->physics->CreateRectangleSensor(125, 400, 203, 5));
+        checkpoints.push_back(App->physics->CreateRectangleSensor(548, 652, 200, 5));
+        checkpoints.push_back(App->physics->CreateRectangleSensor(832, 652, 205, 5)); 
+        checkpoints.push_back(App->physics->CreateRectangleSensor(1250, 400, 203, 5));
+        checkpoints.push_back(App->physics->CreateRectangleSensor(690, 115, 5, 200));
     }
     if (selectedMapIndex == 1) {
-        checkpoints.push_back(App->physics->CreateRectangleSensor(928, 652, 75, 10));  // Checkpoint 1: Inicio/Fin 
-        // Otros checkpoints
-        checkpoints.push_back(App->physics->CreateRectangleSensor(928, 550, 75, 10));  // Checkpoint 2: Carretera derecha
+        checkpoints.push_back(App->physics->CreateRectangleSensor(610, 115, 5, 200));
+        checkpoints.push_back(App->physics->CreateRectangleSensor(125, 400, 203, 5));
+        checkpoints.push_back(App->physics->CreateRectangleSensor(548, 652, 200, 5));
+        checkpoints.push_back(App->physics->CreateRectangleSensor(832, 652, 205, 5));
+        checkpoints.push_back(App->physics->CreateRectangleSensor(1250, 400, 203, 5));
+        checkpoints.push_back(App->physics->CreateRectangleSensor(690, 115, 5, 200));
     }
     if (selectedMapIndex == 2) {
-        checkpoints.push_back(App->physics->CreateRectangleSensor(928, 652, 75, 10));  // Checkpoint 1: Inicio/Fin 
-        // Otros checkpoints
-        checkpoints.push_back(App->physics->CreateRectangleSensor(928, 550, 75, 10));  // Checkpoint 2: Carretera derecha
+        checkpoints.push_back(App->physics->CreateRectangleSensor(610, 115, 5, 200));
+        checkpoints.push_back(App->physics->CreateRectangleSensor(125, 400, 203, 5));
+        checkpoints.push_back(App->physics->CreateRectangleSensor(548, 652, 200, 5));
+        checkpoints.push_back(App->physics->CreateRectangleSensor(832, 652, 205, 5));
+        checkpoints.push_back(App->physics->CreateRectangleSensor(1250, 400, 203, 5));
+        checkpoints.push_back(App->physics->CreateRectangleSensor(690, 115, 5, 200));
     }
 }
-
 void ModuleGame::CreateColliders()
 {
-    // Coordenadas de los puntos para los colisionadores
-    // Cada par (x, y) define un punto, y el último conecta al primero (loop)i
+    RemoveMapColliders();
     const int chain1Points[] = {
     487, 1010,
     515, 1006,
@@ -777,4 +770,31 @@ void ModuleGame::CreateColliders()
 PhysBody* Car::GetBody()
 {
     return m_body;
+}
+void ModuleGame::RemoveMapColliders()
+{
+    // Iterar sobre los colliders y eliminar los que no son coches
+    for (auto it = m_colliders.begin(); it != m_colliders.end();)
+    {
+        Collider& collider = *it; // Obtener el collider actual
+
+        // Comprobar si el collider es un coche
+        if (collider.GetBody() != car1->GetBody() && collider.GetBody() != car2->GetBody())
+        {
+            // Eliminar el collider del mundo físico
+            App->physics->world->DestroyBody(collider.GetBody()->body); // Asegúrate de que tienes acceso al cuerpo
+            it = m_colliders.erase(it); // Eliminar del vector
+        }
+        else
+        {
+            ++it; // Solo avanzar si no se eliminó
+        }
+    }
+
+    // También eliminar los checkpoints si es necesario
+    for (auto& checkpoint : checkpoints)
+    {
+        App->physics->world->DestroyBody(checkpoint->body);
+    }
+    checkpoints.clear(); // Limpiar la lista de checkpoints
 }

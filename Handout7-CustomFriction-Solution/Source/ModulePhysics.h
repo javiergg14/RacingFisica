@@ -41,7 +41,9 @@ class ModulePhysics : public Module, public b2ContactListener
 public:
     ModulePhysics(Application* app, bool start_enabled = true);
     ~ModulePhysics();
-
+    void DestroyBody(b2Body* body) {
+        world->DestroyBody(body);
+    }
     bool Start();
     update_status PreUpdate();
     virtual update_status PostUpdate() override;
@@ -54,8 +56,7 @@ public:
     void BeginContact(b2Contact* contact);
 
     PhysBody* CreateRectangleSensor(int x, int y, int width, int height);
-
+    b2World* world; // Cambiar a público
 private:
     bool debug;
-    b2World* world;
 };

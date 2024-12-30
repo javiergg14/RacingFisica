@@ -74,11 +74,10 @@ class Collider
 public:
     Collider(PhysBody* i_body);
     ~Collider();
-
+    PhysBody* GetBody() const { return m_body; }
     void Draw();
-
-private:
     PhysBody* m_body = nullptr;
+
 };
 
 
@@ -91,6 +90,7 @@ public:
     update_status Update();
     void CreateCheckpoints();
     void CreateColliders();
+    void RemoveMapColliders();
     bool CleanUp();
     bool MainMenu();
     void OnCollision(PhysBody* bodyA, PhysBody* bodyB);
