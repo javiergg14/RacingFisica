@@ -176,10 +176,9 @@ bool ModuleGame::MainMenu()
                 else if (i == 2) mapText = "Map 3: Barrel Road";
 
                 // Ajustar la posición del texto sobre el mapa seleccionado
-                DrawText(mapText, 450, 700, 50, WHITE);
+                DrawText(mapText, 285, 775, 80, WHITE);
             }
         }
-
         if (IsKeyPressed(KEY_RIGHT)) {
             PlaySound(SwitchOption);
             selectedMapIndex = (selectedMapIndex + 1) % 3;
@@ -702,7 +701,7 @@ void ModuleGame::CreateColliders()
     298, 1010,
     481, 1006
     };
-    const int chain2Points[] = {
+    const int chain3Points[] = {
     21, 168,
     23, 870,
     76, 970,
@@ -730,7 +729,7 @@ void ModuleGame::CreateColliders()
     56, 71,
     20, 168
     };
-    const int chain3Points[] = {
+    const int chain2Points[] = {
     24, 157,
     22, 878,
     67, 967,
