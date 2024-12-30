@@ -331,11 +331,11 @@ update_status ModuleGame::Update() {
     }
 
     float car1UsedPercentage = car1TurboUsedTime / turboDuration;
-    DrawRectangle(50, 800, 20, 150, LIGHTGRAY);
+    DrawRectangle(50, 800, 20, 150, { 200, 200, 200, 100 });
     DrawRectangle(50, 800 + 150 * car1UsedPercentage, 20, 150 * (1.0f - car1UsedPercentage), BLUE);
 
     float car2UsedPercentage = car2TurboUsedTime / turboDuration;
-    DrawRectangle(1300, 800, 20, 150, LIGHTGRAY);
+    DrawRectangle(1300, 800, 20, 150, { 200, 200, 200, 100 });
     DrawRectangle(1300, 800 + 150 * car2UsedPercentage, 20, 150 * (1.0f - car2UsedPercentage), RED);
 
     if (countdownActive) {
