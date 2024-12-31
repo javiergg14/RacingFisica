@@ -102,6 +102,7 @@ public:
     Sound Selection;
     Sound SwitchOption;
     Sound countdownSound;
+    Sound Gasolina;
     // Estado del juego
     bool isMenuActive = true;
     bool isMapSelectorActive = false;

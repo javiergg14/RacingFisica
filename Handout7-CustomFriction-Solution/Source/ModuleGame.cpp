@@ -30,6 +30,7 @@ bool ModuleGame::Start()
     Selection = LoadSound("Assets/Sounds/SelectionMade.wav");
     SwitchOption = LoadSound("Assets/Sounds/SwitchOption.wav");
     countdownSound = LoadSound("Assets/Sounds/Countdown.wav");
+    Gasolina = countdownSound = LoadSound("Assets/Sounds/Gasolina.wav");
     LOG("Loading Intro assets");
     bool ret = true;
 
@@ -62,6 +63,7 @@ bool ModuleGame::CleanUp()
     UnloadTexture(mapTextures[2]);
     UnloadTexture(car1Texture);
     UnloadTexture(car2Texture);
+    UnloadTexture(creditsTexture);
     UnloadTexture(mapSelectorBgTexture);
     UnloadTexture(mapSelectorTextures[0]);
     UnloadTexture(mapSelectorTextures[1]);
@@ -74,6 +76,11 @@ bool ModuleGame::MainMenu()
 {
     if (isMenuActive)
     {
+        if (!IsSoundPlaying(Gasolina))
+        {
+            PlaySound(Gasolina);
+        }
+
         // Dibuja el menú principal
         DrawTexture(MenuTexture, 0, 0, WHITE);
         const char* menuOptions[] = { "Start", "Credits", "Controls", "Exit" };
@@ -203,7 +210,6 @@ bool ModuleGame::MainMenu()
             for (Car& c : m_tdTire) {
                 SetInitPosCar(c);
             }
-
             // Inicializar contador
             countdownActive = true;
             countdownTimer = 0.0f;
