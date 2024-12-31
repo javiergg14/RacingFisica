@@ -30,7 +30,10 @@ bool ModuleGame::Start()
     Selection = LoadSound("Assets/Sounds/SelectionMade.wav");
     SwitchOption = LoadSound("Assets/Sounds/SwitchOption.wav");
     countdownSound = LoadSound("Assets/Sounds/Countdown.wav");
-    Gasolina = countdownSound = LoadSound("Assets/Sounds/Gasolina.wav");
+    Gasolina = LoadSound("Assets/Sounds/Gasolina.wav");
+    MapSelection= LoadSound("Assets/Sounds/MapSelection.wav");
+    Turbo1 = LoadSound("Assets/Sounds/Turbo.wav");
+    Turbo2 = LoadSound("Assets/Sounds/Turbo.wav");
     LOG("Loading Intro assets");
     bool ret = true;
 
@@ -57,6 +60,12 @@ bool ModuleGame::Start()
 // Load assets
 bool ModuleGame::CleanUp()
 {
+    UnloadSound(Turbo1);
+    UnloadSound(Turbo2);
+    UnloadSound(MapSelection);
+    UnloadSound(Gasolina);
+    UnloadSound(Selection);
+    UnloadSound(countdownSound);
     UnloadTexture(MenuTexture);
     UnloadTexture(mapTextures[0]);
     UnloadTexture(mapTextures[1]);
@@ -76,9 +85,9 @@ bool ModuleGame::MainMenu()
 {
     if (isMenuActive)
     {
-        if (!isMenuMusicPlaying)
+        if (!IsSoundPlaying(Gasolina))
         {
-            PlaySound(Gasolina)
+            PlaySound(Gasolina);
         }
         // Dibuja el menú principal
         DrawTexture(MenuTexture, 0, 0, WHITE);
@@ -104,6 +113,7 @@ bool ModuleGame::MainMenu()
         }
         else if (IsKeyPressed(KEY_ENTER) && !isEnterPressed)
         {
+          
             PlaySound(Selection);
             isEnterPressed = true;
             switch (selectedMenuOption)
@@ -111,6 +121,7 @@ bool ModuleGame::MainMenu()
             case 0: // Start
                 isMapSelectorActive = true;
                 isMenuActive = false;
+                    StopSound(Gasolina);
                 break;
             case 1: // Credits
                 showCredits = true;
@@ -150,8 +161,13 @@ bool ModuleGame::MainMenu()
     //Map Selector Screen
     else if (isMapSelectorActive)
     {
+        if (!IsSoundPlaying(MapSelection))
+        {
+            PlaySound(MapSelection);
+        }
         if (IsKeyPressed(KEY_BACKSPACE))
         {
+            StopSound(MapSelection);
             isMenuActive = true;
             isMapSelectorActive = false;
         }
@@ -194,6 +210,7 @@ bool ModuleGame::MainMenu()
             PlaySound(SwitchOption);
         }
         else if (IsKeyPressed(KEY_ENTER)) {
+            StopSound(MapSelection);
             PlaySound(Selection);
             isMapSelectorActive = false;
 
@@ -298,6 +315,7 @@ update_status ModuleGame::Update() {
         DrawText(TextFormat("Time: %.2f seconds", totalTime), 430, 400, 50, WHITE);
         DrawText("Press ENTER to continue", 460, 950, 30, WHITE);
         if (IsKeyPressed(KEY_ENTER)) {
+            PlaySound(Selection);
             RemoveMapColliders();
             gameFinished = false;
             for (Car& c : m_tdTire) {
@@ -315,6 +333,7 @@ update_status ModuleGame::Update() {
 
     if (IsKeyPressed(KEY_LEFT_SHIFT) && car1TurboUsedTime < turboDuration) car1TurboActive = true;
     if (car1TurboActive) {
+        if (!IsSoundPlaying(Turbo1)) PlaySound(Turbo1);
         car1TurboUsedTime += GetFrameTime();
         if (car1TurboUsedTime >= turboDuration || IsKeyReleased(KEY_LEFT_SHIFT)) car1TurboActive = false;
         if (car1TurboUsedTime >= turboDuration) car1TurboUsedTime = turboDuration;
@@ -322,10 +341,13 @@ update_status ModuleGame::Update() {
     else {
         car1TurboRechargeTimer = fmin(car1TurboRechargeTimer + GetFrameTime(), turboRechargeDuration);
         if (car1TurboUsedTime > 0.0f) car1TurboUsedTime = fmax(car1TurboUsedTime - GetFrameTime() * (turboDuration / turboRechargeDuration), 0.0f);
+        StopSound(Turbo1);
     }
 
     if (IsKeyPressed(KEY_SPACE) && car2TurboUsedTime < turboDuration) car2TurboActive = true;
     if (car2TurboActive) {
+        if(!IsSoundPlaying(Turbo2)) PlaySound(Turbo2);
+
         car2TurboUsedTime += GetFrameTime();
         if (car2TurboUsedTime >= turboDuration || IsKeyReleased(KEY_SPACE)) car2TurboActive = false;
         if (car2TurboUsedTime >= turboDuration) car2TurboUsedTime = turboDuration;
@@ -333,6 +355,7 @@ update_status ModuleGame::Update() {
     else {
         car2TurboRechargeTimer = fmin(car2TurboRechargeTimer + GetFrameTime(), turboRechargeDuration);
         if (car2TurboUsedTime > 0.0f) car2TurboUsedTime = fmax(car2TurboUsedTime - GetFrameTime() * (turboDuration / turboRechargeDuration), 0.0f);
+        StopSound(Turbo2);
     }
 
     float car1UsedPercentage = car1TurboUsedTime / turboDuration;
