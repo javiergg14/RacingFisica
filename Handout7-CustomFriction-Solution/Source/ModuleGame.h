@@ -115,6 +115,7 @@ public:
     bool countdownActive = false;
     bool playersCanMove = false;
     bool countdownSoundPlayed = false;
+    bool gasolinaSoundPlayed = false;
     float countdownTimer = 0.0f;
     int countdownValue = 3;
 // Turbo para car1

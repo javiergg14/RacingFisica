@@ -76,11 +76,10 @@ bool ModuleGame::MainMenu()
 {
     if (isMenuActive)
     {
-        if (!IsSoundPlaying(Gasolina))
+        if (!isMenuMusicPlaying)
         {
-            PlaySound(Gasolina);
+            PlaySound(Gasolina)
         }
-
         // Dibuja el menú principal
         DrawTexture(MenuTexture, 0, 0, WHITE);
         const char* menuOptions[] = { "Start", "Credits", "Controls", "Exit" };
