@@ -221,6 +221,8 @@ bool ModuleGame::MainMenu()
             car1CurrentCheckpointIndex = 0;
             car2CurrentCheckpointIndex = 0;
             totalTime = 0.0f;
+            m_creationTimer.Start();
+
             CreateColliders();
             CreateCheckpoints();
             for (Car& c : m_tdTire) {
