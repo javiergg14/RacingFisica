@@ -243,11 +243,15 @@ bool ModuleGame::MainMenu()
 // OnCollision para manejar colisiones
 void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 {
+    bool isCollisionRelevant = false;
+
     // Verificar si colisionó con un checkpoint
     for (size_t i = 0; i < checkpoints.size(); ++i)
     {
         if (bodyA == checkpoints[i] || bodyB == checkpoints[i])
         {
+            isCollisionRelevant = true;
+
             // Saber qué coche tocó el checkpoint
             if (bodyA == car1->GetBody() || bodyB == car1->GetBody())
             {
@@ -269,6 +273,13 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
             }
             break;
         }
+    }
+
+    // Ignorar colisiones que no sean con checkpoints
+    if (!isCollisionRelevant)
+    {
+        LOG("Colisión irrelevante entre objetos, ignorada.");
+        return;
     }
 }
 void ModuleGame::CountLapsAndManageCheckpoints(int& lapCount, int& currentCheckpointIndex, int carNumber)
