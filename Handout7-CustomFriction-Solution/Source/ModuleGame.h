@@ -46,6 +46,7 @@ public:
     float GetLifeTime() const;
     int GetPlayer();
     void Draw(Texture2D texture);
+    void DrawTurboTrail();
     void Update();
     PhysBody* GetBody();
     Module* module = nullptr;

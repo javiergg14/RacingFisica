@@ -320,6 +320,7 @@ update_status ModuleGame::Update() {
             if ((c.GetPlayer() == 1 && car1TurboActive) || (c.GetPlayer() == 2 && car2TurboActive)) c.ApplyTurbo();
             c.Update();
             c.Draw(c.GetPlayer() == 1 ? car1Texture : car2Texture);
+            c.DrawTurboTrail();
         }
     }
 
@@ -489,15 +490,12 @@ void Circle::Draw()
 }
 void Car::Draw(Texture2D texture)
 {
-    // Obtén la posición y el ángulo del cuerpo físico
     b2Vec2 pos = m_body->body->GetPosition();      
     float angle = m_body->body->GetAngle() * RAD2DEG; 
 
-    // Dimensiones del coche (más pequeñas, en metros)
     float width = 23.0f; 
     float height = 43.0f; 
 
-    // Convierte la posición del coche de metros a píxeles
     float posX = METERS_TO_PIXELS(pos.x);
     float posY = METERS_TO_PIXELS(pos.y);
 
@@ -507,6 +505,63 @@ void Car::Draw(Texture2D texture)
     DrawTexturePro(texture, Rectangle{ 0, 0, (float)texture.width, (float)texture.height },
         Rectangle{ (float)posX, (float)posY, (float)texture.width, (float)texture.height },
         origin, angle, WHITE);
+}
+void Car::DrawTurboTrail()
+{
+    if ((player == 1 && m_moduleGame->car1TurboActive) || (player == 2 && m_moduleGame->car2TurboActive)) {
+
+        // Posición actual del coche
+        b2Vec2 carPos = m_body->body->GetPosition();
+        float angle = m_body->body->GetAngle();
+
+        // Offset para la estela de turbo
+        b2Vec2 trailOffset = m_body->body->GetWorldVector(b2Vec2(0.0f, 1.3f)); // Offset detrás del coche
+        b2Vec2 trailPos = carPos + trailOffset;
+
+        // Convertir a píxeles
+        float posX = METERS_TO_PIXELS(trailPos.x);
+        float posY = METERS_TO_PIXELS(trailPos.y);
+
+        // Dibujar múltiples capas de llamas dinámicas
+        for (int i = 0; i < 8; ++i) {
+            // Variaciones en tamaño y posición
+            float flameWidth = 10.0f - (i * 1.8f);      // El ancho disminuye gradualmente
+            float flameHeight = 15.0f + (i * 6.0f);     // La altura aumenta gradualmente
+            float offsetX = (rand() % 5 - 2) / 10.0f;   // Desplazamiento horizontal aleatorio
+            float offsetY = -i * 5.0f / 10.0f;          // Alineación vertical
+
+            // Color dinámico (corregido para evitar verde en el centro)
+            Color flameColor = { 255, 150 - (i * 20), 0, 220 - (i * 25) };
+
+            DrawRectanglePro( { posX + offsetX, posY + offsetY, flameWidth, flameHeight },{ flameWidth / 2.0f, flameHeight }, angle * RAD2DEG, flameColor );
+        }
+        // Efecto de chispas dinámicas
+        for (int i = 0; i < 15; ++i) {
+            float sparkX = posX + (rand() % 20 - 10);
+            float sparkY = posY + (rand() % 10 - 5);
+            float sparkSize = 1.0f + (rand() % 2);
+
+            Color sparkColor = { 255, 200 + rand() % 55, 50 + rand() % 50, 180 + rand() % 75 };
+            DrawCircle(sparkX, sparkY, sparkSize, sparkColor);
+        }
+        // Efecto de brillo con orientación
+        for (int i = 0; i < 2; ++i) { 
+            float glowWidth = 10.0f + (i * 5); 
+            float glowHeight = 20.0f + (i * 10);
+
+            Color glowColor = { 255, 200 + (i * 20), 0, 50 - (i * 15) };
+            DrawRectanglePro({ posX, posY, glowWidth, glowHeight },{ glowWidth / 2.0f, glowHeight / 2.0f }, angle * RAD2DEG, glowColor);
+        }
+
+        // Efecto de calor ondulante (distorsión realista)
+        for (int i = 0; i < 6; ++i) {
+            float distortionX = posX + (rand() % 8 - 4);
+            float distortionY = posY + (i * 4);
+
+            Color distortionColor = { 255, 255, 255, 50 + (rand() % 50) };
+            DrawRectanglePro({ distortionX, distortionY }, { 3, 3 }, angle * RAD2DEG, distortionColor);
+        }
+    }
 }
 
 void Circle::Update(float i_staticFricion, float i_dynamicFriction)
