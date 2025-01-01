@@ -46,7 +46,7 @@ public:
     float GetLifeTime() const;
     int GetPlayer();
     void Draw(Texture2D texture);
-    void Update(float i_staticFriction, float i_dynamicFriction);
+    void Update();
     PhysBody* GetBody();
     Module* module = nullptr;
 

@@ -307,7 +307,7 @@ update_status ModuleGame::Update() {
     if (!gameFinished && playersCanMove) {
         for (Car& c : m_tdTire) {
             if ((c.GetPlayer() == 1 && car1TurboActive) || (c.GetPlayer() == 2 && car2TurboActive)) c.ApplyTurbo();
-            c.Update(m_staticFrictions[m_currentStaticFriction], m_dynamicFrictions[m_currentDynamicFriction]);
+            c.Update();
             c.Draw(c.GetPlayer() == 1 ? car1Texture : car2Texture);
         }
     }
@@ -572,14 +572,14 @@ void Circle::Update(float i_staticFricion, float i_dynamicFriction)
         }
     }
 }
-void Car::Update(float staticFriction, float dynamicFriction)
+void Car::Update()
 {
 
     // Parámetros ajustados del coche
-    float forwardForce = 50.0f;  // Fuerza aplicada para acelerar
-    float brakingForce = 25.0f;  // Fuerza aplicada para frenar
+    float forwardForce = 20.0f;  // Fuerza aplicada para acelerar
+    float brakingForce = 10.0f;  // Fuerza aplicada para frenar
     float angularDamping = 0.1f; // Amortiguación rotacional
-    dynamicFriction = 0.2f;    // Fricción dinámica ajustada
+    float dynamicFriction = 0.2f;    // Fricción dinámica ajustada
 
     // Obtener la dirección hacia adelante del coche
     b2Vec2 forwardNormal = m_body->body->GetWorldVector(b2Vec2(0, 1));
@@ -594,10 +594,10 @@ void Car::Update(float staticFriction, float dynamicFriction)
             force += b2Vec2(forwardNormal.x * brakingForce, forwardNormal.y * brakingForce);
         }
         if (IsKeyDown(KEY_A)) {
-            m_body->body->ApplyTorque(-0.07f, true); // Gira a la izquierda
+            m_body->body->ApplyTorque(-0.03f, true); // Gira a la izquierda
         }
         if (IsKeyDown(KEY_D)) {
-            m_body->body->ApplyTorque(0.07f, true); // Gira a la derecha
+            m_body->body->ApplyTorque(0.03f, true); // Gira a la derecha
         }
     }
     else if (player == 2) { // Controles de flechas
@@ -608,10 +608,10 @@ void Car::Update(float staticFriction, float dynamicFriction)
             force += b2Vec2(forwardNormal.x * brakingForce, forwardNormal.y * brakingForce);
         }
         if (IsKeyDown(KEY_LEFT)) {
-            m_body->body->ApplyTorque(-0.07f , true); // Gira a la izquierda
+            m_body->body->ApplyTorque(-0.03f , true); // Gira a la izquierda
         }
         if (IsKeyDown(KEY_RIGHT)) {
-            m_body->body->ApplyTorque(0.07f, true); // Gira a la derecha
+            m_body->body->ApplyTorque(0.03f, true); // Gira a la derecha
         }
     }
     // **2. Fricción estática**
