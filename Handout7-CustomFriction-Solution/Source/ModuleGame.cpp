@@ -546,13 +546,13 @@ void Car::DrawTurboTrail()
         }
         // Efecto de brillo con orientación
         for (int i = 0; i < 2; ++i) { 
-            float glowWidth = 10.0f + (i * 5); 
-            float glowHeight = 20.0f + (i * 10);
+            float glowWidth = 20.f + (i * 5); 
+            float glowHeight = 25.0f + (i * 10);
 
             Color glowColor = { 255, 200 + (i * 20), 0, 50 - (i * 15) };
             DrawRectanglePro({ posX, posY, glowWidth, glowHeight },{ glowWidth / 2.0f, glowHeight / 2.0f }, angle * RAD2DEG, glowColor);
-        }
 
+        }
         // Efecto de calor ondulante (distorsión realista)
         for (int i = 0; i < 6; ++i) {
             float distortionX = posX + (rand() % 8 - 4);
