@@ -510,32 +510,32 @@ void Car::DrawTurboTrail()
 {
     if ((player == 1 && m_moduleGame->car1TurboActive) || (player == 2 && m_moduleGame->car2TurboActive)) {
 
-        // Posición actual del coche
+        // Actual Position of the Car
         b2Vec2 carPos = m_body->body->GetPosition();
         float angle = m_body->body->GetAngle();
 
-        // Offset para la estela de turbo
+        // Offset
         b2Vec2 trailOffset = m_body->body->GetWorldVector(b2Vec2(0.0f, 1.3f)); // Offset detrás del coche
         b2Vec2 trailPos = carPos + trailOffset;
 
-        // Convertir a píxeles
+        //position to pixels
         float posX = METERS_TO_PIXELS(trailPos.x);
         float posY = METERS_TO_PIXELS(trailPos.y);
 
-        // Dibujar múltiples capas de llamas dinámicas
+        //iterate
         for (int i = 0; i < 8; ++i) {
-            // Variaciones en tamaño y posición
-            float flameWidth = 10.0f - (i * 1.8f);      // El ancho disminuye gradualmente
-            float flameHeight = 15.0f + (i * 6.0f);     // La altura aumenta gradualmente
-            float offsetX = (rand() % 5 - 2) / 10.0f;   // Desplazamiento horizontal aleatorio
-            float offsetY = -i * 5.0f / 10.0f;          // Alineación vertical
+            //Flame body & position
+            float flameWidth = 10.0f - (i * 1.8f);    
+            float flameHeight = 15.0f + (i * 6.0f);   
+            float offsetX = (rand() % 5 - 2) / 10.0f;  
+            float offsetY = -i * 5.0f / 10.0f;  
 
-            // Color dinámico (corregido para evitar verde en el centro)
+            // Dynamic Color
             Color flameColor = { 255, 150 - (i * 20), 0, 220 - (i * 25) };
 
             DrawRectanglePro( { posX + offsetX, posY + offsetY, flameWidth, flameHeight },{ flameWidth / 2.0f, flameHeight }, angle * RAD2DEG, flameColor );
         }
-        // Efecto de chispas dinámicas
+        // Dynamic Sparks
         for (int i = 0; i < 15; ++i) {
             float sparkX = posX + (rand() % 20 - 10);
             float sparkY = posY + (rand() % 10 - 5);
@@ -544,7 +544,7 @@ void Car::DrawTurboTrail()
             Color sparkColor = { 255, 200 + rand() % 55, 50 + rand() % 50, 180 + rand() % 75 };
             DrawCircle(sparkX, sparkY, sparkSize, sparkColor);
         }
-        // Efecto de brillo con orientación
+        // Bright
         for (int i = 0; i < 2; ++i) { 
             float glowWidth = 20.f + (i * 5); 
             float glowHeight = 25.0f + (i * 10);
@@ -553,7 +553,7 @@ void Car::DrawTurboTrail()
             DrawRectanglePro({ posX, posY, glowWidth, glowHeight },{ glowWidth / 2.0f, glowHeight / 2.0f }, angle * RAD2DEG, glowColor);
 
         }
-        // Efecto de calor ondulante (distorsión realista)
+        // Distortion
         for (int i = 0; i < 6; ++i) {
             float distortionX = posX + (rand() % 8 - 4);
             float distortionY = posY + (i * 4);
