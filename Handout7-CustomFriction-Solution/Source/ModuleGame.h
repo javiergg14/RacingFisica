@@ -55,14 +55,12 @@ private:
     PhysBody* m_body = nullptr;
     Timer m_lifeTime;
     float mass;
-    float forceX;
-    float forceY;
-    float maxSpeed;
-    float normalForce;
-    float staticFriction;
-    int framesWithoutInput;
-    int maxFramesWithoutInput;
     int player;
+    float forwardForce; 
+    float brakingForce;  
+    float angularDamping; 
+    float dynamicFriction;
+    float staticFriction;
 
     // Puntero a ModuleGame
     ModuleGame* m_moduleGame = nullptr;
@@ -100,13 +98,13 @@ public:
 public:
 
     //Sounds
-    Sound Selection;
-    Sound SwitchOption;
+    Sound selection;
+    Sound switchOption;
     Sound countdownSound;
-    Sound Gasolina;
-    Sound MapSelection;
-    Sound Turbo1;
-    Sound Turbo2;
+    Sound gasolina;
+    Sound mapSelection;
+    Sound turbo1;
+    Sound turbo2;
     // Estado del juego
     bool isMenuActive = true;
     bool isMapSelectorActive = false;
@@ -166,7 +164,7 @@ public:
     Texture2D mapTextures[3];
     Texture2D mapSelectorBgTexture;
     Texture2D mapSelectorTextures[3];
-    Texture2D MenuTexture;
+    Texture2D menuTexture;
     Texture2D creditsTexture;
     Texture2D car1Texture;
     Texture2D car2Texture;
