@@ -1,4 +1,16 @@
 Racing
 
-Coche azul: W y S para acelerar y frenar, A y D para girar, Left Shift turbo.
-Coche naranja: Flecha arriba y Flecha abajo para acelerar y frenar, Flecha Izquierda y Flecha derecha para girar, Space para turbo
+Participantes:
+- Javier Gómez
+- Toni Llovera
+- Mario Torrents
+- Oscar Alonso
+- David Subirats
+
+Controles:
+- W/Flecha Arriba: acelerar
+- S/Flecha Abajo: frenar
+- A/Flecha Izquierda: girar izquierda
+- D/Flecha Derecha: girar derecha
+
+
