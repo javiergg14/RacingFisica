@@ -797,6 +797,28 @@ void ModuleGame::CreateColliders()
     298, 1010,
     481, 1006
     };
+
+    const int chain4Points[] = {
+    228, 218,
+    1145, 215,
+    1143, 800,
+    934, 800,
+    930, 545,
+    929, 526,
+    904, 482,
+    868, 440,
+    826, 416,
+    790, 402,
+    586, 400,
+    546, 421,
+    506, 448,
+    482, 481,
+    460, 506,
+    446, 540,
+    444, 805,
+    226, 810
+    };
+
     const int chain3Points[] = {
     21, 168,
     23, 870,
@@ -825,6 +847,30 @@ void ModuleGame::CreateColliders()
     56, 71,
     20, 168
     };
+
+    const int chain5Points[] = {
+    230, 217,
+    1142, 214,
+    1140, 220,
+    392, 227,
+    337, 241,
+    295, 274,
+    275, 302,
+    260, 335,
+    251, 364,
+    248, 395,
+    244, 432,
+    244, 468,
+    254, 510,
+    262, 547,
+    290, 574,
+    322, 602,
+    350, 622,
+    388, 631,
+    1124, 638,
+    1128, 810,
+    225, 812
+    };
     const int chain2Points[] = {
     24, 157,
     22, 878,
@@ -847,20 +893,48 @@ void ModuleGame::CreateColliders()
     67, 64,
     25, 157
     };
+    const int chain6Points[] = {
+            227, 215,
+            478, 216,
+            481, 401,
+            593, 513,
+            487, 607,
+            483, 807,
+            230, 807
+    };
+    const int chain7Points[] = {
+            896, 221,
+            1146, 218,
+            1147, 807,
+            890, 807,
+            883, 610,
+            787, 512,
+            893, 403
+    };
     if (selectedMapIndex == 0)
     {
         PhysBody* collider1 = App->physics->CreateChain(0, 0, chain1Points, sizeof(chain1Points) / sizeof(int));  
         m_colliders.emplace_back(collider1);
+        PhysBody* collider4 = App->physics->CreateChain(0, 0, chain4Points, sizeof(chain4Points) / sizeof(int));
+        m_colliders.emplace_back(collider4);
+
     }
     else if (selectedMapIndex == 1)
     {
         PhysBody* collider2 = App->physics->CreateChain(0, 0, chain2Points, sizeof(chain2Points) / sizeof(int));
         m_colliders.emplace_back(collider2);
+        PhysBody* collider5 = App->physics->CreateChain(0, 0, chain5Points, sizeof(chain5Points) / sizeof(int));
+        m_colliders.emplace_back(collider5);
     }
     else if (selectedMapIndex == 2)
     {
         PhysBody* collider3 = App->physics->CreateChain(0, 0, chain3Points, sizeof(chain3Points) / sizeof(int));
         m_colliders.emplace_back(collider3);
+        PhysBody* collider6 = App->physics->CreateChain(0, 0, chain6Points, sizeof(chain6Points) / sizeof(int));
+        m_colliders.emplace_back(collider6);
+        PhysBody* collider7 = App->physics->CreateChain(0, 0, chain7Points, sizeof(chain7Points) / sizeof(int));
+        m_colliders.emplace_back(collider7);
+
     }
 }
 PhysBody* Car::GetBody()
