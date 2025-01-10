@@ -34,6 +34,8 @@ bool ModuleGame::Start()
     mapSelection= LoadSound("Assets/Sounds/MapSelection.wav");
     turbo1 = LoadSound("Assets/Sounds/Turbo.wav");
     turbo2 = LoadSound("Assets/Sounds/Turbo.wav");
+    motor = LoadSound("Assets/Sounds/Motor.wav");
+    audiowin = LoadSound("Assets/Sounds/Audiowin.wav");
     LOG("Loading Intro assets");
     bool ret = true;
 
@@ -66,6 +68,8 @@ bool ModuleGame::CleanUp()
     UnloadSound(gasolina);
     UnloadSound(selection);
     UnloadSound(countdownSound);
+    UnloadSound(motor);
+    UnloadSound(audiowin);
     UnloadTexture(menuTexture);
     UnloadTexture(mapTextures[0]);
     UnloadTexture(mapTextures[1]);
@@ -295,6 +299,7 @@ void ModuleGame::CountLapsAndManageCheckpoints(int& lapCount, int& currentCheckp
         if (lapCount == 4) 
         {
             gameFinished = true;
+            PlaySound(audiowin);
             winner = carNumber; // Establece el ganador
             totalTime = m_creationTimer.ReadSec();
             LOG("¡Coche %d terminó la carrera! Tiempo total: %.2f segundos", carNumber, totalTime);
@@ -329,6 +334,7 @@ update_status ModuleGame::Update() {
         DrawText(TextFormat("Time: %.2f seconds", totalTime), 430, 400, 50, WHITE);
         DrawText("Press ENTER to continue", 460, 950, 30, WHITE);
         if (IsKeyPressed(KEY_ENTER)) {
+            StopSound(audiowin);
             PlaySound(selection);
             RemoveMapColliders();
             gameFinished = false;

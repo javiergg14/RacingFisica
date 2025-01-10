@@ -105,6 +105,8 @@ public:
     Sound mapSelection;
     Sound turbo1;
     Sound turbo2;
+    Sound motor;
+    Sound audiowin;
     // Estado del juego
     bool isMenuActive = true;
     bool isMapSelectorActive = false;
