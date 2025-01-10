@@ -292,6 +292,7 @@ void ModuleGame::CountLapsAndManageCheckpoints(int& lapCount, int& currentCheckp
         if (lapCount == 4)
         {
             gameFinished = true;
+            StopSound(racesong);
             PlaySound(audiowin);
             winner = carNumber;
             totalTime = m_creationTimer.ReadSec();
