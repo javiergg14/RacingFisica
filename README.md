@@ -1,23 +1,24 @@
 # NeedForBeer
 
-## Juego Original: **Space Drift**
+## Juego Original: **Micro Pico racers**
 
-## Diferencias entre *NeedForBeer* y *Space Drift*
+## Diferencias entre *NeedForBeer* y *Micro Pico Racers*
+
 1. **Ambientación:**  
-   - *Racing:* Carreras terrestres tradicionales.  
-   - *Space Drift:* Carreras espaciales futuristas.  
+   - *NeedForBeer:* Circuitos de carreras.  
+   - *Micro Pico Racers:* Escenarios más mundanos.  
 
 2. **Controles:**  
-   - *Racing:* Controles básicos de movimiento en un plano 2D.  
-   - *Space Drift:* Movimiento en un entorno tridimensional con rotaciones y turbo.  
+   - *NeedForBeer:* Controles de teclado y ratón.  
+   - *Micro Pico Racers:* Controles de mando.  
 
-3. **Mecánicas de juego:**  
-   - *Racing:* Circuitos estáticos con giros y curvas.  
-   - *Space Drift:* Pistas con obstáculos dinámicos y modificadores gravitatorios.  
+3. **Número de Jugadores:**  
+   - *NeedForBeer:* " 2 Jugadores enfrentados en pantalla única.  
+   - *Micro Pico Racers:* Posibilidad de jugar contra IA o de jugar 2 jugadores a pantalla dividida.  
 
-4. **Objetivo adicional:**  
-   - *Racing:* Llegar primero a la meta.  
-   - *Space Drift:* Además de ganar, sobrevivir a los desafíos de la pista.  
+4. **Coches:**  
+   - *NeedForBeer:* Coches de F1.  
+   - *Micro Pico Racers:* Coches deportivos.  
 
 ## Participantes
 - **Javier Gómez**  
