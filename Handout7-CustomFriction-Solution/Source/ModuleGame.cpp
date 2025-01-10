@@ -34,6 +34,9 @@ bool ModuleGame::Start()
     mapSelection= LoadSound("Assets/Sounds/MapSelection.wav");
     turbo1 = LoadSound("Assets/Sounds/Turbo.wav");
     turbo2 = LoadSound("Assets/Sounds/Turbo.wav");
+    motor = LoadSound("Assets/Sounds/Motor.wav");
+    audiowin = LoadSound("Assets/Sounds/Audiowin.wav");
+    racesong = LoadSound("Assets/Sounds/Racesong.wav");
     LOG("Loading Intro assets");
 
 
@@ -67,6 +70,8 @@ bool ModuleGame::CleanUp()
     UnloadSound(gasolina);
     UnloadSound(selection);
     UnloadSound(countdownSound);
+    UnloadSound(motor);
+    UnloadSound(audiowin);
     UnloadTexture(menuTexture);
     UnloadTexture(mapTextures[0]);
     UnloadTexture(mapTextures[1]);
@@ -221,6 +226,7 @@ bool ModuleGame::MainMenu()
 
             CreateColliders();
             CreateCheckpoints();
+            PlaySound(racesong);
 
             car1ActiveCheckpoints.resize(checkpoints.size(), true);
             car2ActiveCheckpoints.resize(checkpoints.size(), true);
@@ -286,6 +292,7 @@ void ModuleGame::CountLapsAndManageCheckpoints(int& lapCount, int& currentCheckp
         if (lapCount == 4)
         {
             gameFinished = true;
+            PlaySound(audiowin);
             winner = carNumber;
             totalTime = m_creationTimer.ReadSec();
             printf("¡Coche %d ha terminado la carrera! Tiempo total: %.2f segundos", carNumber, totalTime);
@@ -323,6 +330,7 @@ update_status ModuleGame::Update() {
         DrawText(TextFormat("Time: %.2f seconds", totalTime), 430, 400, 50, WHITE);
         DrawText("Press ENTER to continue", 460, 950, 30, WHITE);
         if (IsKeyPressed(KEY_ENTER)) {
+            StopSound(audiowin);
             PlaySound(selection);
             RemoveMapColliders();
             gameFinished = false;
@@ -634,7 +642,6 @@ void Circle::Update(float i_staticFricion, float i_dynamicFriction)
 }
 void Car::Update()
 {
-
     // Parámetros ajustados del coche
     forwardForce =60.0f;  // Fuerza aplicada para acelerar
     brakingForce = 20.0f;  // Fuerza aplicada para frenar
