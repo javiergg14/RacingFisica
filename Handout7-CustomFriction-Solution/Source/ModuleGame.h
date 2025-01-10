@@ -93,7 +93,8 @@ public:
     bool MainMenu();
     void OnCollision(PhysBody* bodyA, PhysBody* bodyB);
 
-    void CountLapsAndManageCheckpoints(int& lapCount, int& currentCheckpointIndex, int carNumber);
+    void CountLapsAndManageCheckpoints(int& lapCount, int& currentCheckpointIndex, std::vector<bool>& activeCheckpoints, int carNumber);
+
 
 public:
 
@@ -136,6 +137,8 @@ public:
     const float turboDuration = 1.8f; 
     const float turboRechargeDuration = 7.0f; 
 
+    std::vector<bool> car1ActiveCheckpoints = { true };
+    std::vector<bool> car2ActiveCheckpoints = { true };
     bool gameFinished = false;
     float totalTime = 0.0f;
     int car1LapCount = 1;
@@ -159,6 +162,7 @@ public:
     //Fricción
     std::vector<float> m_staticFrictions = { 0.0f, 0.1f, 0.3f, 0.5f };
     std::vector<float> m_dynamicFrictions = { 0.0f, 0.1f, 0.3f, 0.5f };
+
     int m_currentStaticFriction;
     int m_currentDynamicFriction;
 

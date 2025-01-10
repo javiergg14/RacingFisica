@@ -34,10 +34,8 @@ bool ModuleGame::Start()
     mapSelection= LoadSound("Assets/Sounds/MapSelection.wav");
     turbo1 = LoadSound("Assets/Sounds/Turbo.wav");
     turbo2 = LoadSound("Assets/Sounds/Turbo.wav");
-    motor = LoadSound("Assets/Sounds/Motor.wav");
-    audiowin = LoadSound("Assets/Sounds/Audiowin.wav");
     LOG("Loading Intro assets");
-    bool ret = true;
+
 
     // Crear el coche en el centro de la pantalla
     mass = 100.0f; // Masa del coche
@@ -56,7 +54,7 @@ bool ModuleGame::Start()
     {
         checkpoint->listener = this;
     }
-    return ret;
+    return true;
 }
 
 // Load assets
@@ -68,8 +66,6 @@ bool ModuleGame::CleanUp()
     UnloadSound(gasolina);
     UnloadSound(selection);
     UnloadSound(countdownSound);
-    UnloadSound(motor);
-    UnloadSound(audiowin);
     UnloadTexture(menuTexture);
     UnloadTexture(mapTextures[0]);
     UnloadTexture(mapTextures[1]);
@@ -229,6 +225,10 @@ bool ModuleGame::MainMenu()
 
             CreateColliders();
             CreateCheckpoints();
+
+            car1ActiveCheckpoints.resize(checkpoints.size(), true);
+            car2ActiveCheckpoints.resize(checkpoints.size(), true);
+
             for (Car& c : m_tdTire) {
                 SetInitPosCar(c);
             }
@@ -247,66 +247,59 @@ bool ModuleGame::MainMenu()
 // OnCollision para manejar colisiones
 void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
 {
-    bool isCollisionRelevant = false;
+    if (!bodyA || !bodyB || checkpoints.empty())
+    {
+        return;
+    }
 
-    // Verificar si colisionó con un checkpoint
     for (size_t i = 0; i < checkpoints.size(); ++i)
     {
         if (bodyA == checkpoints[i] || bodyB == checkpoints[i])
         {
-            isCollisionRelevant = true;
-
-            // Saber qué coche tocó el checkpoint
-            if (bodyA == car1->GetBody() || bodyB == car1->GetBody())
+            //coche 1
+            if ((bodyA == car1->GetBody() || bodyB == car1->GetBody()) &&
+                i < car1ActiveCheckpoints.size() && car1ActiveCheckpoints[i])
             {
-                // Gestionar el checkpoint para el coche 1
-                if (i == car1CurrentCheckpointIndex && checkpoints[i]->isActive)
-                {
-                    car1CurrentCheckpointIndex++;
-                    CountLapsAndManageCheckpoints(car1LapCount, car1CurrentCheckpointIndex, 1);
-                }
+                printf("Coche 1 ha tocado checkpoint %d. Checkpoint actual: %d\n", i, car1CurrentCheckpointIndex);
+                car1CurrentCheckpointIndex++;
+                CountLapsAndManageCheckpoints(car1LapCount, car1CurrentCheckpointIndex, car1ActiveCheckpoints, 1);
             }
-            else if (bodyA == car2->GetBody() || bodyB == car2->GetBody())
+            //coche 2
+            else if ((bodyA == car2->GetBody() || bodyB == car2->GetBody()) &&
+                i < car2ActiveCheckpoints.size() && car2ActiveCheckpoints[i])
             {
-                // Gestionar el checkpoint para el coche 2
-                if (i == car2CurrentCheckpointIndex && checkpoints[i]->isActive)
-                {
-                    car2CurrentCheckpointIndex++;
-                    CountLapsAndManageCheckpoints(car2LapCount, car2CurrentCheckpointIndex, 2);
-                }
+                printf("Coche 2 ha tocado checkpoint %d. Checkpoint actual: %d\n", i, car2CurrentCheckpointIndex);
+                car2CurrentCheckpointIndex++;
+                CountLapsAndManageCheckpoints(car2LapCount, car2CurrentCheckpointIndex, car2ActiveCheckpoints, 2);
             }
             break;
         }
     }
-
-    // Ignorar colisiones que no sean con checkpoints
-    if (!isCollisionRelevant)
-    {
-        LOG("Colisión irrelevante entre objetos, ignorada.");
-        return;
-    }
 }
-void ModuleGame::CountLapsAndManageCheckpoints(int& lapCount, int& currentCheckpointIndex, int carNumber)
+
+void ModuleGame::CountLapsAndManageCheckpoints(int& lapCount, int& currentCheckpointIndex, std::vector<bool>& activeCheckpoints, int carNumber)
 {
     if (currentCheckpointIndex >= checkpoints.size()) {
-        currentCheckpointIndex = 0; 
+        currentCheckpointIndex = 0;
         lapCount++;
-        LOG("¡Coche %d completó una vuelta! Total de vueltas: %d", carNumber, lapCount);
+        printf("¡Coche %d ha completado una vuelta! Total de vueltas: %d", carNumber, lapCount);
+
         // Reactivar todos los checkpoints para la siguiente vuelta
-        for (auto& checkpoint : checkpoints) {
-            checkpoint->isActive = true;
-        }
-        if (lapCount == 4) 
+        std::fill(activeCheckpoints.begin(), activeCheckpoints.end(), true);
+
+        if (lapCount == 4)
         {
             gameFinished = true;
-            PlaySound(audiowin);
-            winner = carNumber; // Establece el ganador
+            winner = carNumber;
             totalTime = m_creationTimer.ReadSec();
-            LOG("¡Coche %d terminó la carrera! Tiempo total: %.2f segundos", carNumber, totalTime);
+            printf("¡Coche %d ha terminado la carrera! Tiempo total: %.2f segundos", carNumber, totalTime);
         }
     }
     else {
-        checkpoints[currentCheckpointIndex - 1]->isActive = false; // Desactivar el checkpoint actual
+        if (currentCheckpointIndex > 0) {
+            printf("Desactivando checkpoint %d para coche %d\n", currentCheckpointIndex - 1, carNumber);
+            activeCheckpoints[currentCheckpointIndex - 1] = false;
+        }
     }
 }
 update_status ModuleGame::Update() {
@@ -334,7 +327,6 @@ update_status ModuleGame::Update() {
         DrawText(TextFormat("Time: %.2f seconds", totalTime), 430, 400, 50, WHITE);
         DrawText("Press ENTER to continue", 460, 950, 30, WHITE);
         if (IsKeyPressed(KEY_ENTER)) {
-            StopSound(audiowin);
             PlaySound(selection);
             RemoveMapColliders();
             gameFinished = false;
