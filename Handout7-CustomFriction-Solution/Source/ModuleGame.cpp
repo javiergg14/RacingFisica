@@ -36,7 +36,7 @@ bool ModuleGame::Start()
     turbo2 = LoadSound("Assets/Sounds/Turbo.wav");
     motor = LoadSound("Assets/Sounds/Motor.wav");
     audiowin = LoadSound("Assets/Sounds/Audiowin.wav");
-    racesong = LoadSound("Assets/Sounds/Racesong.wav");
+    raceSong = LoadSound("Assets/Sounds/Racesong.wav");
     LOG("Loading Intro assets");
 
 
@@ -72,6 +72,7 @@ bool ModuleGame::CleanUp()
     UnloadSound(countdownSound);
     UnloadSound(motor);
     UnloadSound(audiowin);
+    UnloadSound(raceSong);
     UnloadTexture(menuTexture);
     UnloadTexture(mapTextures[0]);
     UnloadTexture(mapTextures[1]);
@@ -226,7 +227,8 @@ bool ModuleGame::MainMenu()
 
             CreateColliders();
             CreateCheckpoints();
-            PlaySound(racesong);
+            PlaySound(raceSong);
+            PlaySound(motor);
 
             car1ActiveCheckpoints.resize(checkpoints.size(), true);
             car2ActiveCheckpoints.resize(checkpoints.size(), true);
@@ -292,7 +294,8 @@ void ModuleGame::CountLapsAndManageCheckpoints(int& lapCount, int& currentCheckp
         if (lapCount == 4)
         {
             gameFinished = true;
-            StopSound(racesong);
+            StopSound(raceSong);
+            StopSound(motor);
             PlaySound(audiowin);
             winner = carNumber;
             totalTime = m_creationTimer.ReadSec();
