@@ -27,11 +27,11 @@
 - **David Subirats**
 
 ## Controles
-- **Acelerar:** `W` / Flecha Arriba  
-- **Frenar:** `S` / Flecha Abajo  
-- **Girar Izquierda:** `A` / Flecha Izquierda  
-- **Girar Derecha:** `D` / Flecha Derecha
-- **Turbo:** `Left Shift` / Spacebar 
+- **Acelerar:** `W` / `Flecha Arriba`  
+- **Frenar:** `S` / `Flecha Abajo`  
+- **Girar Izquierda:** `A` / `Flecha Izquierda`  
+- **Girar Derecha:** `D` / `Flecha Derecha`
+- **Turbo:** `Left Shift` / `Spacebar` 
 
 ## Repositorio en GitHub
 🔗 [NeedForBeer](https://github.com/javiergg14/RacingFisica)
