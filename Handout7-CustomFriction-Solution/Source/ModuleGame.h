@@ -179,4 +179,11 @@ public:
 
     Car* car1;
     Car* car2;
+
+    // Map Positions
+    Vector2 mapPositions[3] = {
+    {200, 400},
+    {650, 400},
+    {1100, 400}
+    };
 };

@@ -54,6 +54,7 @@ bool ModuleGame::Start()
     {
         checkpoint->listener = this;
     }
+
     return true;
 }
 
@@ -172,11 +173,6 @@ bool ModuleGame::MainMenu()
             isMapSelectorActive = false;
         }
         DrawTexture(mapSelectorBgTexture, 0, 0, WHITE);
-        Vector2 mapPositions[3] = {
-            {200, 400},
-            {650, 400},
-            {1100, 400}
-        };
 
         for (int i = 0; i < 3; ++i) {
             float scale = (i == selectedMapIndex) ? 1.25f : 1.0f;
