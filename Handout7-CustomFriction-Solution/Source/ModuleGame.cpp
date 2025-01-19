@@ -260,21 +260,27 @@ void ModuleGame::OnCollision(PhysBody* bodyA, PhysBody* bodyB)
     {
         if (bodyA == checkpoints[i] || bodyB == checkpoints[i])
         {
-            //coche 1
+            // Coche 1
             if ((bodyA == car1->GetBody() || bodyB == car1->GetBody()) &&
                 i < car1ActiveCheckpoints.size() && car1ActiveCheckpoints[i])
             {
-                printf("Coche 1 ha tocado checkpoint %d. Checkpoint actual: %d\n", i, car1CurrentCheckpointIndex);
-                car1CurrentCheckpointIndex++;
-                CountLapsAndManageCheckpoints(car1LapCount, car1CurrentCheckpointIndex, car1ActiveCheckpoints, 1);
+                // Verificar si el coche ha pasado por todos los checkpoints anteriores
+                if (i == car1CurrentCheckpointIndex) {
+                    printf("Coche 1 ha tocado checkpoint %d. Checkpoint actual: %d\n", i, car1CurrentCheckpointIndex);
+                    car1CurrentCheckpointIndex++;
+                    CountLapsAndManageCheckpoints(car1LapCount, car1CurrentCheckpointIndex, car1ActiveCheckpoints, 1);
+                }
             }
-            //coche 2
+            // Coche 2
             else if ((bodyA == car2->GetBody() || bodyB == car2->GetBody()) &&
                 i < car2ActiveCheckpoints.size() && car2ActiveCheckpoints[i])
             {
-                printf("Coche 2 ha tocado checkpoint %d. Checkpoint actual: %d\n", i, car2CurrentCheckpointIndex);
-                car2CurrentCheckpointIndex++;
-                CountLapsAndManageCheckpoints(car2LapCount, car2CurrentCheckpointIndex, car2ActiveCheckpoints, 2);
+                // Verificar si el coche ha pasado por todos los checkpoints anteriores
+                if (i == car2CurrentCheckpointIndex) {
+                    printf("Coche 2 ha tocado checkpoint %d. Checkpoint actual: %d\n", i, car2CurrentCheckpointIndex);
+                    car2CurrentCheckpointIndex++;
+                    CountLapsAndManageCheckpoints(car2LapCount, car2CurrentCheckpointIndex, car2ActiveCheckpoints, 2);
+                }
             }
             break;
         }
@@ -286,7 +292,7 @@ void ModuleGame::CountLapsAndManageCheckpoints(int& lapCount, int& currentCheckp
     if (currentCheckpointIndex >= checkpoints.size()) {
         currentCheckpointIndex = 0;
         lapCount++;
-        printf("¡Coche %d ha completado una vuelta! Total de vueltas: %d", carNumber, lapCount);
+        printf("¡Coche %d ha completado una vuelta! Total de vueltas: %d\n", carNumber, lapCount);
 
         // Reactivar todos los checkpoints para la siguiente vuelta
         std::fill(activeCheckpoints.begin(), activeCheckpoints.end(), true);
@@ -299,7 +305,7 @@ void ModuleGame::CountLapsAndManageCheckpoints(int& lapCount, int& currentCheckp
             PlaySound(audiowin);
             winner = carNumber;
             totalTime = m_creationTimer.ReadSec();
-            printf("¡Coche %d ha terminado la carrera! Tiempo total: %.2f segundos", carNumber, totalTime);
+            printf("¡Coche %d ha terminado la carrera! Tiempo total: %.2f segundos\n", carNumber, totalTime);
         }
     }
     else {
